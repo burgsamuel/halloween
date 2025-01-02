@@ -1,0 +1,57 @@
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+    color: rgba(250, 250, 250, 0.818);
+    background-image: url(395656.jpg);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+header {
+    backdrop-filter: blur(30px);
+    border: 2px solid rgba(255, 255, 255, 0.012);
+    margin-left: 25px;
+    margin-right: 25px;
+    border-radius: 15px;
+    padding-top: 0px;
+    padding-bottom: 2px;
+    transition: all .3s;
+}
+
+header:hover {
+    backdrop-filter: blur(55px);
+}
+
+header h1 {
+    text-shadow: 3px 3px 3px hsla(0, 100%, 50%, 0.4);
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#nav-button-div {
+    display: flex;
+    flex-direction: column;
+}
+
+#nav-button-div button {
+    border: 3px solid rgba(255, 255, 255, 0.612);
+    margin: 30px;
+    font-size: 2rem;
+    width: 70vw;
+    height: 100px;
+    border-radius: 50px;
+    box-shadow: 4px 4px 5px rgba(0, 0, 0, .8);
+    background-color: rgba(0, 0, 0, .94);
+    color: rgb(211, 187, 182);
+    text-shadow: 3px 3px 3px hsla(0, 1%, 55%, 0.216);
+    transition: all .3s;
+}
+
+#nav-button-div button:hover {
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, .8);
+    box-shadow: none;
+}
