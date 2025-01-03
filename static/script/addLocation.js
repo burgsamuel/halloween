@@ -398,7 +398,7 @@ setTimeout(()=>{
 async function deleteSpots(){
 
 
-
+    navigator.geolocation.clearWatch(id);
     let answer = prompt("Type: 'YES' to confirm DELETE");
 
     if (answer.trim().toUpperCase() === 'YES'){
@@ -424,9 +424,16 @@ async function deleteSpots(){
         }, 5000);
       
         localStorage.setItem("spotCounter", JSON.stringify(0));
-  
+        spotCounterSpan.innerText = `Your Spots: 0`;
+        map.removeLayer(marker_new);
+
+        map.removeLayer(savedMarker);
     }
 }
+
+
+
+
 
 async function keepScreenOn() {
 
