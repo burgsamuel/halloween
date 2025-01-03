@@ -1,10 +1,18 @@
-const locateMeButton = document.getElementById('locate-me-button');
 const saveLocationButton = document.getElementById('save-location-button')
 const statusSpan = document.getElementById('status-span')
+const trackerButton = document.getElementById('tacker-button');
+
+const spotCounterSpan = document.getElementById('spot-counter-span');
 
 let saveLocationFlag = true;
+let autoTracking = true;
+
+let spotCounter = 0;
 
 
+//////////////////////////////////////////////////
+// Set Up Icon Informaiton
+// ///////////////////////////////////////////////
 let iconName = "candy-icon";
 const hatIcon = document.getElementById("hat-icon");
 const pumpkinIcon = document.getElementById("pumpkin-icon");
@@ -44,6 +52,9 @@ let lon = null;
 
 let id;
 
+
+
+
 //////////////////////////////////////////////////
 // Setup Map
 // ///////////////////////////////////////////////
@@ -56,14 +67,17 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map);
 
+
+
 //////////////////////////////////////////////////
 // Load user location
 // ///////////////////////////////////////////////
 
 function getLocation() {
-    locateMeButton.textContent = "Loading";
+
     statusSpan.innerText = "Locating you - Stand outside for best results "
 
+    autoTracking = true;
 
   if (navigator.geolocation) {
     id = navigator.geolocation.watchPosition(showPosition);
@@ -80,7 +94,6 @@ async function showPosition(position) {
 
   map.flyTo(new L.LatLng(lat, lon), 17);
 
-  locateMeButton.textContent = "Please Wait"
 
   for (let i = 0; i < iconArray.length; i++) {
     if (iconArray[i].name == iconName) {
@@ -102,12 +115,16 @@ async function showPosition(position) {
     icon: newIcon,
     title: `${userId}`,
   }).addTo(map);
-      locateMeButton.textContent = "Located"
-      statusSpan.innerText = "Located - Check for Accuracy and click 'Save My Spot - Adjust by clicking on map'"
+      statusSpan.innerText = "If Location is **NOT** correct click the map in the correct spot'"
 }
 
+getLocation();
 
 
+
+//////////////////////////////////////////////////
+// Selecting ICONs
+// ///////////////////////////////////////////////
 
 function iconSelect(imageId) {
   for (let i = 0; i < iconArray.length; i++) {
@@ -123,6 +140,9 @@ function iconSelect(imageId) {
     }
   }
 }
+
+
+
 
 //////////////////////////////////////////////////
 // Load a user id if not already loaded
@@ -143,6 +163,42 @@ function generateId() {
 }
 
 
+
+//////////////////////////////////////////////////
+// Updating total Spots and display
+// ///////////////////////////////////////////////
+
+
+function spotCounterAdd() {
+
+  // Keeping track of total spots for each user
+  spotCounter++;
+  localStorage.setItem("spotCounter", JSON.stringify(spotCounter));
+}
+
+function updateSpotSpan(){
+
+  if (localStorage.getItem("spotCounter") == null) {
+    localStorage.setItem("spotCounter", JSON.stringify(spotCounter));
+  } 
+  else {
+    let counter = JSON.parse(localStorage.getItem("spotCounter"));
+
+    if (counter > 0) {
+      spotCounterSpan.innerText = `Your Spots: ${counter}`;
+    }
+    else {
+      spotCounterSpan.innerText = '';
+    }
+  }
+
+}
+
+updateSpotSpan();
+
+//////////////////////////////////////////////////
+// Saving the Users Location
+// ///////////////////////////////////////////////
 
 async function saveLocation() {
   
@@ -184,7 +240,27 @@ async function saveLocation() {
       setTimeout(() => {
         statusSpan.innerText = `Click View Map at the top for locations` 
       }, 3000)
-      statusSpan.innerText = `${res.Status}`            
+      statusSpan.innerText = `${res.Status}`          
+      
+
+      //persist icon on saved locations
+      let newIcon = L.icon({
+        iconUrl: userIconUrl,
+        iconSize: [25, 25],
+        iconAnchor: [10, 10],
+        popupAnchor: [-3, -76],
+      });
+      savedMarker = new L.marker([lat, lon], {
+        icon: newIcon,
+        title: `${userId}`,
+      }).addTo(map);
+
+      popup.removeFrom(map);
+
+      // Udpating to spot counters for user to see;
+      spotCounterAdd();
+      updateSpotSpan()
+
   } catch(err) {
       console.error(`ERROR: ${err}`);
   }
@@ -197,16 +273,29 @@ async function saveLocation() {
 
   }
 
+
   saveLocationFlag = false;
 }
 
 
+
+
+//////////////////////////////////////////////////
+// Adding spots manuallay to map
+// ///////////////////////////////////////////////
+
 let popup = L.popup();
 
 function onMapClick(e) {
+
+    navigator.geolocation.clearWatch(id);
+    autoTracking = false;
+    trackerButton.textContent = "Auto Tracking OFF/on"
+    statusSpan.innerText = "AUTO Tracking is OFF, manually add your location"
+
     popup
         .setLatLng(e.latlng)
-        .setContent("If you Happy with location Click Save My Spot below")
+        .setContent("If you are Happy with this location Click Save My Spot below")
         .openOn(map);
         lat = e.latlng.lat
         lon = e.latlng.lng
@@ -216,6 +305,10 @@ function onMapClick(e) {
 map.on('click', onMapClick);
 
 
+
+//////////////////////////////////////////////////
+// Adding markers to map
+// ///////////////////////////////////////////////
 
 
 function addMarker(lat, lon) {
@@ -241,4 +334,28 @@ function addMarker(lat, lon) {
     icon: newIcon,
     title: `${userId}`,
   }).addTo(map);
+}
+
+
+
+//////////////////////////////////////////////////
+// Auto tracking button
+// ///////////////////////////////////////////////
+
+
+
+function autoButton() {
+  if (autoTracking) {
+    autoTracking = false;
+    trackerButton.textContent = "Auto Tracking OFF/on"
+
+    statusSpan.innerText = "AUTO Tracking is OFF, manually add your location"
+
+  }
+  else {
+    getLocation();
+    popup.removeFrom(map)
+    autoTracking = true;
+    trackerButton.textContent = "Auto Tracking off/ON"
+  }
 }

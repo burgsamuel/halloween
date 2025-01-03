@@ -15,6 +15,10 @@ body {
     text-align: start;
     backdrop-filter: blur(30px);
   }
+
+  #spot-counter-span {
+    font-size: .8rem;
+  }
   
   header button {
     border: 1px solid rgba(255, 255, 255, 0.612);

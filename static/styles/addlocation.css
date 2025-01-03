@@ -37,11 +37,46 @@ header button:hover {
   box-shadow: none;
 }
 
+#spot-counter-span {
+  font-size: .8rem;
+}
+
+
 #map {
+  z-index: 1;
   height: 50vh;
   margin: 10px;
   border-radius: 10px;
   box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.8);
+}
+
+#autoButtonDiv{
+  z-index: 2;
+  position: absolute;
+  top: 60px;
+  left: 65px;
+}
+
+#tacker-button {
+  border: 1px solid rgba(255, 255, 255, 0.612);
+  margin: 3px;
+  margin-left: 10px;
+  font-size: 0.8rem;
+  padding-left: 10px;
+  padding-right: 10px;
+  height: 30px;
+  border-radius: 20px;
+  box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.94);
+  color: rgb(227, 226, 226);
+  text-shadow: 3px 3px 3px hsla(0, 1%, 55%, 0.216);
+  transition: all 0.3s;
+}
+
+#tacker-button:hover {
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.8);
+  box-shadow: none;
 }
 
 #icon-div {
