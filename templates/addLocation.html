@@ -27,13 +27,15 @@
     <header>
       <a href="/"><button>Home</button></a>
       <a href="/mapView"><button>View Map</button></a>
-      <span id="spot-counter-span"></span>
     </header>
     <div id="autoButtonDiv">
       <button id="tacker-button" onclick="autoButton()">Auto Tracker off/ON</button>
+      <button id="delete-button" onclick="deleteSpots()">Remove My Spots</button>
     </div>
     <div id="map"></div>
-
+    <div id="counter-div">
+      <span id="spot-counter-span"></span>
+    </div>
     <div id="icon-div">
       <p class="icon-p">Step 1 👇<span>(Pick an icon)</span></p>
       <img src="https://cdn-icons-png.flaticon.com/128/6433/6433176.png" id="candy-icon" class="icon-select" onclick="iconSelect(this.id)">

@@ -33,6 +33,13 @@ def recieve_location():
     return {"Status": "Recieved location and Saved ✅"}
 
 
+@app.post("/RemoveUserSpots")
+def remove_spots():
+    data = request.get_json()
+    res = sqlFunctions.remove_spots(data['id'])
+    return {"TotalSpots": res,
+            "Success": "Spots Removed"}
+
 
 if __name__ == "__main__":
     app.run()

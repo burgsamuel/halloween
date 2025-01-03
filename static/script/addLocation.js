@@ -1,6 +1,8 @@
-const saveLocationButton = document.getElementById('save-location-button')
-const statusSpan = document.getElementById('status-span')
+const saveLocationButton = document.getElementById('save-location-button');
+const statusSpan = document.getElementById('status-span');
 const trackerButton = document.getElementById('tacker-button');
+const deleteButton = document.getElementById('delete-button');
+deleteButton.style.visibility = 'hidden';
 
 const spotCounterSpan = document.getElementById('spot-counter-span');
 
@@ -8,6 +10,8 @@ let saveLocationFlag = true;
 let autoTracking = true;
 
 let spotCounter = 0;
+
+let wakeLock = null;
 
 
 //////////////////////////////////////////////////
@@ -50,7 +54,7 @@ let userIconUrl = "https://cdn-icons-png.flaticon.com/128/6433/6433176.png";
 let lat = null;
 let lon = null;
 
-let id;
+let id; // geolocation id
 
 
 
@@ -172,8 +176,16 @@ function generateId() {
 function spotCounterAdd() {
 
   // Keeping track of total spots for each user
-  spotCounter++;
-  localStorage.setItem("spotCounter", JSON.stringify(spotCounter));
+  if (localStorage.getItem("spotCounter") == null) {
+    localStorage.setItem("spotCounter", JSON.stringify(spotCounter));
+    spotCounter++;
+    localStorage.setItem("spotCounter", JSON.stringify(spotCounter));
+  } else {
+    spotCounter = JSON.parse(localStorage.getItem("spotCounter"));
+    spotCounter++;
+    localStorage.setItem("spotCounter", JSON.stringify(spotCounter));
+  }
+
 }
 
 function updateSpotSpan(){
@@ -241,7 +253,7 @@ async function saveLocation() {
         statusSpan.innerText = `Click View Map at the top for locations` 
       }, 3000)
       statusSpan.innerText = `${res.Status}`          
-      
+
 
       //persist icon on saved locations
       let newIcon = L.icon({
@@ -259,16 +271,21 @@ async function saveLocation() {
 
       // Udpating to spot counters for user to see;
       spotCounterAdd();
-      updateSpotSpan()
+      updateSpotSpan();
+
+      if (spotCounter > 0) {
+        deleteButton.style.visibility = 'visible';
+      }
+      
 
   } catch(err) {
       console.error(`ERROR: ${err}`);
   }
   }
   else{
-    saveLocationButton.textContent ="Click ☝️ First"
+    saveLocationButton.textContent ="Please Wait";
     setTimeout(() => {
-    saveLocationButton.textContent ="Save My Spot"
+    saveLocationButton.textContent ="Save My Spot";
     }, 3000)
 
   }
@@ -359,3 +376,67 @@ function autoButton() {
     trackerButton.textContent = "Auto Tracking off/ON"
   }
 }
+
+
+
+
+
+//////////////////////////////////////////////////
+// delete Button Functions 
+// ///////////////////////////////////////////////
+
+setTimeout(()=>{
+
+  let spotting = JSON.parse(localStorage.getItem("spotCounter"));
+
+  if (spotting > 0) {
+    deleteButton.style.visibility = 'visible';
+  }
+},2000);
+
+
+async function deleteSpots(){
+
+
+
+    let answer = prompt("Type: 'YES' to confirm DELETE");
+
+    if (answer.trim().toUpperCase() === 'YES'){
+
+          deleteButton.textContent = "Deleting";
+
+          // Create request to api
+          const req = await fetch('/RemoveUserSpots', {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json' },
+            // data
+            body: JSON.stringify({
+                id: userId,
+            }),
+        });
+        
+        const response = await req.json();
+        deleteButton.textContent = "Spots Deleted";
+      
+        setTimeout(() => {
+          deleteButton.textContent = "Remove My Spots";   
+          deleteButton.style.visibility = 'hidden';
+        }, 5000);
+      
+        localStorage.setItem("spotCounter", JSON.stringify(0));
+  
+    }
+}
+
+async function keepScreenOn() {
+
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+
+  } catch (err) {
+    // The Wake Lock request has failed - usually system related, such as battery.
+    console.log(`${err.name}, ${err.message}`);
+  }
+}
+
+keepScreenOn();

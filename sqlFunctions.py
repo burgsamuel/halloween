@@ -65,3 +65,15 @@ def retrieve_data():
     
     return retrieved_data
     
+
+def remove_spots(user_id):
+    
+    conn = sqlitecloud.connect(url)
+    c = conn.cursor()
+    
+    c.execute("DELETE FROM users WHERE userid = :id", {'id': user_id})
+    
+    conn.commit()
+    c.close()
+    
+    return {"Delete" : True}
