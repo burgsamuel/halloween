@@ -364,6 +364,8 @@ function addMarker(lat, lon) {
 function autoButton() {
   if (autoTracking) {
     autoTracking = false;
+
+    navigator.geolocation.clearWatch(id);
     trackerButton.textContent = "Auto Tracking OFF/on"
 
     statusSpan.innerText = "AUTO Tracking is OFF, manually add your location"
@@ -398,7 +400,7 @@ setTimeout(()=>{
 async function deleteSpots(){
 
 
-    navigator.geolocation.clearWatch(id);
+
     let answer = prompt("Type: 'YES' to confirm DELETE");
 
     if (answer.trim().toUpperCase() === 'YES'){
