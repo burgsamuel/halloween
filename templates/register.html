@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Registration
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  {% for message in messages %}
+    <p style="max-width: 350px; margin-left: 7px; border: 1px solid tomato; background-color: rgba(255, 99, 71, 0.473); color: aliceblue; border-radius: 3px; padding: 10px;" >{{ message }}</p>
+  {% endfor %}
+
+{% endif %}
+{% endwith %}
+ <h3 style="color: aliceblue; margin-left: 7px;">
+Welcome {{ user }}
+</h3>
+<h4 style="color: aliceblue; margin-left: 7px; font-size: 1.5rem; margin-bottom: 25px;">
+  <br>Email has been sent to: {{ email }}<br><br>
+  Please type the verification code contained within the email below.
+</h4>
+<form action="/emailVerification" method="post">
+  <div class="form-group text-white">
+    <label class="form-group text-white" for="code" style="margin-left: 10px;">Verification Code 👇</label>
+      <input type="text" class="form-control"  name="code" placeholder="Enter code" style="max-width: 150px; margin: 10px;" required>
+  </div>
+  <input type="submit" class="btn btn-secondary" value="Submit" style="margin: 10px;">
+</form> 
+
+
+{% endblock %}

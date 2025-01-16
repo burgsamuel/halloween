@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Login State
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  {% for message in messages %}
+    <p style="max-width: 350px; border: 1px solid rgba(22, 185, 87, 0.667); background-color: rgba(71, 255, 126, 0.473); color: aliceblue; border-radius: 3px; padding: 10px;" >{{ message }}</p>
+  {% endfor %}
+
+{% endif %}
+{% endwith %}
+
+{% endblock %}
