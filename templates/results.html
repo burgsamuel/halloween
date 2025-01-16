@@ -44,11 +44,11 @@
 
       {% if i['raceDetails']%}
       <div class="row text-center" style="opacity: .8;">
-        <div class="col-3" style="font-size: .7em; padding: 10px 3px;">{{i['raceDetails']['lastFinishes']}}</div>
+        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['raceDetails']['lastFinishes']}}</div>
         {% if i['conditions'] %}
-        <div class="col-3" style="font-size: .7em; padding: 10px 3px;">{{i['conditions']['condition']}}</div>
-        <div class="col-3" style="font-size: .7em; padding: 10px 3px;">{{i['conditions']['weather']}}</div>
-        <div class="col-3" style="font-size: .7em; padding: 10px 3px;">{{i['conditions']['temp']}}°C</div>
+        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['condition']}}</div>
+        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['weather']}}</div>
+        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['temp']}}°C</div>
         {% endif %}
       </div>
       {% endif %}
