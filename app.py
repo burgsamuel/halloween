@@ -22,49 +22,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 app.config["SESSION_TYPE"] = "filesystem"
 
 bcrypt = Bcrypt(app) 
-Session(app)
-
-
-all_data = {}
-
-
-def tips_data():
-    
-    '''Caching tips data'''
-    
-    all_data['tips'] = horses.retrive_mongo_data()
-    
-    print("Collecting tips cache data")
-    
-    start_time = time.time()
-    update_time = start_time + 600
-    
-    while True:
-        if time.time() >= update_time:
-            all_data['tips'] = horses.retrive_mongo_data()
-            start_time = time.time()
-        else:
-            time.sleep(30)
-      
-
-def results_data():
-    
-    '''Caching Results caching data'''
-    
-    all_data['results'] = horses.retrive_mongo_data()
-    
-    print('Collecting Results cache data')
-    
-    start_time = time.time()
-    update_time = start_time + 600
-    
-    while True:
-        if time.time() >= update_time:
-            all_data['results'] = horses.retrive_mongo_result_data()
-            start_time = time.time()
-        else:
-            time.sleep(30)
-            
+Session(app)           
           
 
 def email_verification_timeout(user):
@@ -82,18 +40,6 @@ def email_verification_timeout(user):
         else:
             time.sleep(30)
 
-
-#############################################
-######### Start caching Threads  ############
-#############################################
-
-tips_cache = threading.Thread(target=tips_data)
-tips_cache.daemon = True
-tips_cache.start()
-
-results_cache = threading.Thread(target=results_data)
-results_cache.daemon = True
-results_cache.start()
 
 ############################################
 ####            Home Page               ####
@@ -121,8 +67,7 @@ def tips():
         if session['user'] is not None:
             user = horses.check_user_exsists(session['user'])
             if user['verified']:
-                # data = horses.retrive_mongo_data()
-                data = all_data['tips']
+                data = horses.retrive_mongo_data()
                 return render_template('tips.html', tipsActive=True, data=data, timenow=(time.time() + 300), user=session['user']) 
             else:
                 flash("Email not Verified!!")
@@ -141,8 +86,7 @@ def results():
         if session['user'] is not None:
             user = horses.check_user_exsists(session['user'])
             if user['verified']:
-                # data = horses.retrive_mongo_result_data()
-                data = all_data['results']
+                data = horses.retrive_mongo_result_data()
                 return render_template('results.html', tipsActive=True, data=data, timenow=(time.time() + 300), user=session['user']) 
             else:
                 flash("Email not Verified!!")
