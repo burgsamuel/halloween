@@ -69,7 +69,7 @@
         </div>
         <div class="col-md-4 mb-3">
             <label for="address" style="margin-left: 7px;">Mailing Address if different from ☝️</label>
-            <input type="text" class="form-control" name="mailingaddress" id="mailingaddress" placeholder="(Not-Required)" style="max-width: 350px; margin: 7px;" >
+            <input type="text" class="form-control" name="mailingaddress" id="mailingaddress" placeholder="(optional)" style="max-width: 350px; margin: 7px;" >
           </div>
           <div class="col-md-3 mb-3">
             <label for="state" style="margin-left: 7px;">State</label>
@@ -97,7 +97,7 @@
             </div>
           </div>
         </div>
-        <button class="btn btn-secondary" type="submit" style="margin: 7px; margin-top: 7px;">Submit form</button>
+        <button class="btn btn-secondary" type="submit" id="submit-button" onclick="loadingStatus()" style="margin: 7px; margin-top: 7px; width: 125px;">Submit form</button>
       </form>
       
       <script>
@@ -157,6 +157,25 @@
         checkPassword()
       },500)
       
+
+      const buttonSubmit = document.getElementById('submit-button');
+      function loadingStatus(){
+
+        let value1 = passwordBox.value;
+        let value2 = retypeCheck.value;
+
+        if (value1 === '' || value2 === ''){
+          return
+        }
+        else{
+          buttonSubmit.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
+        }
+      }
+
       </script>
 
 {% endblock %}
+<script>
+
+
+</script>

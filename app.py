@@ -111,9 +111,8 @@ def login():
     if request.method == 'POST':
         user_name = request.form['email']
         password = request.form['password']
-        
         user_exsists = horses.check_user_exsists(user_name)
-        
+
         if user_exsists is not None:
             
             hashed_password = user_exsists['hashed_password']
@@ -227,7 +226,6 @@ def verify_email():
             flash("Too many Wrong attemps!")
             return redirect('/logout')
         else:
-            session.clear()
             flash("Sorry that is an incorrect Code")
             return render_template('register.html')
 
@@ -277,4 +275,4 @@ def remove_spots():
  
      
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

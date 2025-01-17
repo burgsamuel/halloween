@@ -12,7 +12,7 @@
 
 {% endif %}
 {% endwith %}
-<a id="already-raced-button" href="/results" class="btn btn-secondary" style="margin: 10px; width: 185px;">Show Todays Results</a>
+<a id="already-raced-button" href="/results" class="btn btn-secondary" onclick="loadingStatus()" style="margin: 10px; width: 185px;">Show Todays Results</a>
 
 <div style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 750px; justify-content: center; align-items: center;">
 
@@ -35,6 +35,10 @@
 
 <script>
   showButton.style.display = 'flex';
+
+  function loadingStatus(){
+        showButton.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
+  }
 </script>
 
   {% endif %}

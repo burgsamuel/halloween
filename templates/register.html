@@ -23,10 +23,30 @@ Welcome {{ user }}
 <form action="/emailVerification" method="post">
   <div class="form-group text-white">
     <label class="form-group text-white" for="code" style="margin-left: 10px;">Verification Code 👇</label>
-      <input type="text" class="form-control"  name="code" placeholder="Enter code" style="max-width: 150px; margin: 10px;" required>
+      <input type="text" class="form-control" id="code-form"  name="code" placeholder="Enter code" style="max-width: 150px; margin: 10px;" required>
   </div>
-  <input type="submit" class="btn btn-secondary" value="Submit" style="margin: 10px;">
+  <button type="submit" class="btn btn-secondary" value="Login" style="margin: 10px; width: 125px;" id="submit-button" onclick="loadingStatus()">
+    Submit 
+  </button>
 </form> 
 
+<script>
+
+  const codeForm = document.getElementById('code-form');
+  const buttonSubmit = document.getElementById('submit-button');
+  function loadingStatus(){
+
+    let value1 = codeForm.value;
+
+
+    if (value1 === ''){
+      return
+    }
+    else{
+      buttonSubmit.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
+    }
+
+  }
+</script>
 
 {% endblock %}
