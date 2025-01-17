@@ -65,13 +65,13 @@ def tips():
     
     try:
         if session['user'] is not None:
-            user = horses.check_user_exsists(session['user'])
-            if user['verified']:
-                data = horses.retrive_mongo_data()
-                return render_template('tips.html', tipsActive=True, data=data, timenow=(time.time() + 300), user=session['user']) 
-            else:
-                flash("Email not Verified!!")
-                return redirect('/login')    
+            # user = horses.check_user_exsists(session['user'])
+            # if user['verified']:
+            data = horses.retrive_mongo_data()
+            return render_template('tips.html', tipsActive=True, data=data, timenow=(time.time() + 300), user=session['user']) 
+            # else:
+                # flash("Email not Verified!!")
+                # return redirect('/login')    
         else:
             flash("Please Login/Register! ")
             return redirect('/login')
@@ -84,13 +84,13 @@ def tips():
 def results():
     try:
         if session['user'] is not None:
-            user = horses.check_user_exsists(session['user'])
-            if user['verified']:
+            # user = horses.check_user_exsists(session['user'])
+            # if user['verified']:
                 data = horses.retrive_mongo_result_data()
                 return render_template('results.html', tipsActive=True, data=data, timenow=(time.time() + 300), user=session['user']) 
-            else:
-                flash("Email not Verified!!")
-                return redirect('/login')    
+            # else:
+            #     flash("Email not Verified!!")
+            #     return redirect('/login')    
         else:
             flash("Please Login/Register! ")
             return redirect('/login')
@@ -223,10 +223,11 @@ def verify_email():
 
         if int(results > 2):
             horses.delete_user_registration(user)
-            
+            session.clear()
             flash("Too many Wrong attemps!")
             return redirect('/logout')
         else:
+            session.clear()
             flash("Sorry that is an incorrect Code")
             return render_template('register.html')
 
