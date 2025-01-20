@@ -19,15 +19,15 @@
   </svg> YouTube</button></a>
   <hr class="hr">
   {% if user %}
-  <a href="/logout"><button type="button" style="margin-left: 10px; width: 125px;" class="btn btn-secondary">logout</button></a>
   <a href="/tips"><button type="button" style="margin-left: 10px; width: 125px;" class="btn btn-secondary">Todays Tips</button></a>
+  <a href="/wallPost"><button type="button" style="margin-left: 10px; width: 125px;" class="btn btn-secondary">Posts</button></a>
   {% else %}
       <a href="/login"><button type="button" style="margin-left: 10px; width: 125px;" class="btn btn-secondary">login</button></a>
       <a href="/register"><button type="button" style="margin-left: 10px; width: 125px;" class="btn btn-secondary">Register</button></a>
   {% endif %}
   <hr class="hr">
 {% if user %}
-<h5 class="text-white" style="margin-left: 10px;">Hi, remember to check todays tips</h5>
+<h5 class="text-white" style="margin-left: 10px;">Hi, remember to check todays tips<br> The New post page allows you to share your tips.</h5>
 {% else %}
 <h5 class="text-white" style="margin-left: 10px;">Please login/Register to continue
 
