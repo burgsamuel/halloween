@@ -1,0 +1,53 @@
+{% extends 'base.html' %} {% block title %}Posts{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  {% for message in messages %}
+    <p style=" margin-left: 10px; max-width: 350px; border: 1px solid tomato; background-color: rgba(255, 99, 71, 0.473); color: aliceblue; border-radius: 3px; padding: 10px;" >{{ message }}</p>
+  {% endfor %}
+{% endif %}
+{% endwith %}
+ 
+<h5 class="text-white" style="font-size: 1rem; margin-left: 10px;">Posting as 👇</h4>
+<form action="/submitPost" method="post">
+<div class="form-group ">
+    <input type="text" class="form-control" id="user-name" name="username" placeholder="{{user}}" style="max-width: 350px; margin: 10px;" readonly>
+</div>
+<div class="form-group">
+<textarea class="form-control" id="post-text-area" name="postText" placeholder="Your Post" style="max-width: 350px; margin: 10px;" required></textarea>
+</div>
+<button type="submit" class="btn btn-secondary" value="Login" style="margin: 10px; width: 125px;" id="submit-button" onclick="loadingStatus()">
+  Post
+</button>
+</form>
+
+<hr class="hr">
+
+{% for i in data %}
+<div class="row bg-light text-center" id="{{i['_id']}}" style="margin: 10px; border-radius: 10px;">
+  <div class="text-start" style="margin-top: 5px;">
+    <p style="font-weight: 600;">{{i['format_time']}} <br><span style="font-weight: 400; font-size: .8rem;">{{i['user']}}</span></p>
+    <hr class="hr">
+    <p class="" style="font-weight: 600;">{{i['post']}}</p>
+  </div>
+  <hr class="hr">
+  {% if user == i['user'] %}
+  <form action="/removePost" method="post" onsubmit="return confirm('Are you sure you want to remove this post? You cannot undo!')">
+    <button type="submit" name="id_of_post" value="{{i['_id']}}" class="btn btn-danger btn-sm" style="width: 80px;" >Delete</button>
+    <button type="submit" name="like-button" value="{{i['_id']}}" class="btn btn-secondary disabled btn-sm" style="width: 80px;" aria-disabled="true" >like👍</button>
+  </form>
+
+  {% else %}
+  <form action="/addlike" method="post" onsubmit="return confirm('Just confirming you are liking this post?')">
+    <button type="submit" name="like-button" value="{{i['_id']}}" class="btn btn-secondary btn-sm" style="width: 80px;" >like👍</button>
+  </form>
+
+  
+  {% endif%}
+  <span>Likes {{i['likes']}}</span>
+</div>
+
+{% endfor %}
+
+{% endblock %}

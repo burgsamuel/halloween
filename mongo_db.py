@@ -1,6 +1,8 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+from bson.objectid import ObjectId
 from dotenv import load_dotenv
+import time
 import os
 
 
@@ -13,6 +15,10 @@ class HorseMongo():
         self.url = f'mongodb+srv://admin:{self.password}@cluster0.r2jvy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
     
     
+    
+    ############################################################
+    ##########               Tips Data               ###########
+    ############################################################
     
     
     def retrive_mongo_data(self):
@@ -42,7 +48,11 @@ class HorseMongo():
         
         return response
     
-    
+
+
+    ############################################################
+    ##########            User Registration          ###########
+    ############################################################    
     
 
     def register_user(self, first, last,  email, hashed_pass, mobile, street_address, mailing_address, state, post_code, ver_code, verified, attemps):
@@ -150,3 +160,90 @@ class HorseMongo():
             response = user.delete_one(query_filter)
             print('Unverified User removed')
             return response
+        
+        
+    
+        
+    ############################################################
+    ##########            User Post Data             ###########
+    ############################################################
+    
+        
+    def store_post_data(self, user, post):
+        
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
+
+        database = client.get_database('horse_data')
+        horses = database.get_collection('posts')
+        
+        time_stored = time.time()
+        
+        formated_time = time.strftime('%c', time.localtime(time_stored))
+            
+        if formated_time[0] == '0' or formated_time[0] == 0:
+            formated_time = formated_time[1:]
+            
+            formated_time = formated_time
+        
+        
+        horses.insert_one({
+            'user' : user,
+            'timeStored' : time_stored,
+            'format_time': formated_time,
+            'post' : post,
+            'likes': 0,
+        })
+        
+        return horses
+    
+    
+    
+    def retrive_post_data(self):
+        
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
+
+        database = client.get_database('horse_data')
+        horses = database.get_collection('posts')
+        
+        response = horses.find().sort({'timeStored': -1})
+        
+        return response
+
+
+
+    def delete_post_data(self, post_id):
+        
+        ''' Check for an id on a post than delete it from mongoDB  '''
+        
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
+
+        database = client.get_database('horse_data')
+        user = database.get_collection('posts') 
+
+        query_filter = {"_id": ObjectId(post_id)}
+        response = user.delete_one(query_filter)
+        
+        return response
+    
+    
+    def add_post_like(self, post_id):
+        
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
+
+        database = client.get_database('horse_data')
+        user = database.get_collection('posts') 
+        
+        user_name = user.find_one({"_id": ObjectId(post_id)})
+        likes = int(user_name['likes']) + 1
+        
+        
+        query_filter = {"_id": ObjectId(post_id)}
+        update_operation = {'$set': { 'likes' : likes }}
+        
+        response = user.update_one(query_filter, update_operation)
+        
+        return response

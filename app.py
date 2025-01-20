@@ -100,6 +100,65 @@ def results():
 
 
 
+############################################
+####            Post/Forum             ####
+############################################
+
+
+@app.get('/wallPost')
+def get_wall():
+    try: 
+        if session['user'] is not None:
+            data = horses.retrive_post_data()
+            return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
+    except KeyError:
+        flash("Login to access this feature!")
+        return render_template('home.html', homeActive=True)
+
+
+@app.post('/submitPost')
+def submit_post():
+    try:
+        if session['user'] is not None:          
+            username = session['user']
+            post_text = request.form['postText']
+        horses.store_post_data(username, post_text)
+        data = horses.retrive_post_data()
+        return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
+            
+    except KeyError:
+        flash("Something went wrong with post!")
+        return render_template('wallPost.html', postsActive=True, user=session['user'])
+    
+    
+@app.post('/removePost')
+def remove_post():
+    try:
+        if session['user'] is not None:          
+            post_id = request.form['id_of_post']
+            horses.delete_post_data(post_id)
+        data = horses.retrive_post_data()
+        return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
+            
+    except KeyError:
+        flash("Something went wrong with post!")
+        return render_template('wallPost.html', postsActive=True, user=session['user'])
+    
+
+@app.post('/addlike')
+def add_likes():
+    try:
+        if session['user'] is not None:       
+            post_id = request.form['like-button']
+            horses.add_post_like(post_id)
+        data = horses.retrive_post_data()
+        return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
+            
+    except KeyError:
+        flash("Something went wrong with the like button!")
+        data = horses.retrive_post_data()
+        return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
+
 
 
 ############################################

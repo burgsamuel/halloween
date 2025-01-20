@@ -2,6 +2,13 @@
 
 
 {% block content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  {% for message in messages %}
+    <p style=" margin-left: 10px; max-width: 350px; border: 1px solid tomato; background-color: rgba(255, 99, 71, 0.473); color: aliceblue; border-radius: 3px; padding: 10px;" >{{ message }}</p>
+  {% endfor %}
+{% endif %}
+{% endwith %}
 
 <a href="https://www.facebook.com/profile.php?id=61569943590810
 "><button class="btn btn-primary" style="margin-left: 10px; width: 125px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16">
