@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Password reset
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  {% for message in messages %}
+    <p style="margin-left: 10px; max-width: 350px; border: 1px solid tomato; background-color: rgba(255, 99, 71, 0.473);  color: aliceblue; border-radius: 3px; padding: 10px;" >{{ message }}</p>
+  {% endfor %}
+
+{% endif %}
+{% endwith %}
+
+<h5 class="text-white" style="margin-left: 10px; margin-bottom: 25px;">Please enter details below</h5>
+
+<form action="/passwordEmail" method="post" onsubmit="return confirm('Confirm Password Reset!')">
+    <div class="form-group">
+        <input type="text" class="form-control" id="email-form" name="email" placeholder="Enter Email" style="max-width: 350px; margin: 20px 10px;" required>
+    </div>
+    <button type="submit" class="btn btn-secondary" value="Login" style="margin: 10px; width: 125px;" id="submit-button" onclick="loadingStatus()">
+      Reset
+    </button>
+   
+    
+</form>
+
+
+<script>
+
+    const emailForm = document.getElementById('email-form');
+ 
+    const buttonSubmit = document.getElementById('submit-button');
+    function loadingStatus(){
+
+        let value1 = emailForm.value;
+    
+    if (value1 === ''){
+      return
+    }
+    else{
+      buttonSubmit.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
+    }
+}
+</script>
+{% endblock %}

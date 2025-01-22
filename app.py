@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, flash, redirect, session, jsonify
-from mailservice import email_confirmation_email
+from mailservice import email_confirmation_email, email_password_reset
 from flask_session import Session
 from flask_bcrypt import Bcrypt 
 from mongo_db import HorseMongo
@@ -23,7 +23,8 @@ app.config["SESSION_TYPE"] = "filesystem"
 
 bcrypt = Bcrypt(app) 
 Session(app)           
-          
+        
+
 
 def email_verification_timeout(user):
     
@@ -41,9 +42,12 @@ def email_verification_timeout(user):
             time.sleep(30)
 
 
+
+
 ############################################
 ####            Home Page               ####
 ############################################
+
 
 @app.get("/") 
 def home():
@@ -253,13 +257,101 @@ def register_post():
     
     return render_template('register.html', user=firstname, email=email)
 
+
+
+
+############################################
+####           Reset Password           ####
+############################################
+
      
+@app.get('/passwordreset')
+def password_reset():
+    
+    '''Password reset form. Just collects the users email'''
+    
+    return render_template('/password/form1.html')
+
+
+@app.post('/passwordEmail')
+def check_email():
+    
+    '''Returned from the form with users email to reset the password'''
+    
+    user_name = request.form['email']
+    user_exsists = horses.check_user_exsists(user_name)
+    
+    if user_exsists is not None:
+        
+        ver_code = random.randint(10000, 99999)
+        horses.ver_code_update(user_exsists['email'], ver_code)
+        session['reset'] = user_exsists['email']
+        print(ver_code)
+        results = user_exsists['attemps']
+
+        if int(results > 2):
+            session.clear()
+            flash("To many code attemps contact ADMIN!")
+            return redirect('/')
+        else:
+            email = threading.Thread(target=email_password_reset, args=(user_exsists['email'], ver_code))
+            email.start()
+
+            return render_template('/password/checkcode.html')       
+    else:
+        flash('Inncorect email address!')
+        return render_template('/password/form1.html')
+       
+    
+@app.post('/passwordCodeVerification')   
+def check_code():
+    
+    user = session['reset']
+    code = request.form['code']
+    
+    user_exsists = horses.check_user_exsists(user)
+    stored_code = user_exsists['ver_code']
+    
+    if int(code) == int(stored_code):
+        session['user'] = user
+
+        return render_template('/password/newPassword.html')
+    else:
+        response, results = horses.attempt_counter(user)
+
+        if int(results > 2):
+            session.clear()
+            return redirect('/')
+        else:
+            flash("Sorry that is an incorrect Code")
+            return render_template('/password/checkcode.html')
+   
+    
+@app.post('/submitNewPassword')
+def update_new_password():
+    
+    '''Push new password to db'''
+    
+    new_password = request.form['password'] 
+    
+    if session['user'] is not None:
+    
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        
+        horses.update_password(session['user'], hashed_password)
+        flash("Password has been updated 👍")
+        return render_template('loginState.html')
+        
+    else:
+        flash('Something Went Wrong!')
+        return redirect('/')
     
     
     
 ############################################
 ####      Email Verification            ####
 ############################################    
+    
     
 @app.post('/emailVerification')
 def verify_email():
@@ -297,17 +389,17 @@ def verify_email():
   
 @app.get("/spotter")
 def home_page():
-    return render_template("homepage.html")
+    return render_template("/halloween/homepage.html")
 
 
 @app.get("/location")
 def add_location():
-    return render_template("addLocation.html")
+    return render_template("/halloween/addLocation.html")
 
 
 @app.get("/mapView")
 def map_view():
-    return render_template("mapview.html")
+    return render_template("/halloween/mapview.html")
 
 
 @app.get("/mapData")

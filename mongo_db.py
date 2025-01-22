@@ -161,7 +161,74 @@ class HorseMongo():
             print('Unverified User removed')
             return response
         
+
+
+
+    ############################################################
+    ##########            Password  Reset            ###########
+    ############################################################
+    
+    
+    def ver_code_update(self, email, code):
         
+        ''' add failed attempts to attempt counter to track user attempts '''
+        
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
+
+        database = client.get_database('horse_data')
+        user = database.get_collection('Users')
+
+        query_filter = {'email': email}
+        update_operation = {'$set': { 'ver_code' : code }}
+        
+        response = user.update_one(query_filter, update_operation)
+        
+        return response    
+
+
+
+    def update_password(self, email, hashed_password):
+        
+        ''' Checks to see if user is their than updates password '''
+        
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
+
+        database = client.get_database('horse_data')
+        user = database.get_collection('Users')
+        
+        query_filter = {'email': email}
+        update_operation = {'$set': { 'hashed_password' : hashed_password }}
+        
+        response = user.update_one(query_filter, update_operation)
+        
+        return response
+
+
+
+    ############################################################
+    ##########            User Interaction           ###########
+    ############################################################
+    
+
+    def store_time_user_visited(self, user):
+        
+        '''This is to track notifications for posts and to see if a user has seen posts'''
+        
+        client = MongoClient(self.url, server_api=ServerApi('1'))
+
+        database = client.get_database('horse_data')
+        horses = database.get_collection('User')
+        
+        time_stored = time.time()
+        
+        query_filter = {'email': user}
+        update_operation = {'$Add': { 'lookAtPosts' : time_stored }}
+        
+        response = horses.update_one(query_filter, update_operation)
+        print(response)
+        return response      
     
         
     ############################################################
@@ -229,21 +296,6 @@ class HorseMongo():
         return response
     
     
-    def add_post_like(self, post_id):
-        
-        # Create a new client and connect to the server
-        client = MongoClient(self.url, server_api=ServerApi('1'))
 
-        database = client.get_database('horse_data')
-        user = database.get_collection('posts') 
-        
-        user_name = user.find_one({"_id": ObjectId(post_id)})
-        likes = int(user_name['likes']) + 1
-        
-        
-        query_filter = {"_id": ObjectId(post_id)}
-        update_operation = {'$set': { 'likes' : likes }}
-        
-        response = user.update_one(query_filter, update_operation)
-        
-        return response
+
+              
