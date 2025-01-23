@@ -7,7 +7,7 @@
 
 {% block content%}
 
-<a id="already-raced-button" href="/tips" class="btn btn-secondary" style="margin: 7px; width: 185px;">Show Next Races</a>
+<a id="show-next-race" href="/tips" class="btn btn-secondary" style="margin: 10px; width: 185px;" onclick="loadingStatus()">Show Next Races</a>
 
 <div style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 750px; justify-content: center; align-items: center;">
 
@@ -97,4 +97,12 @@
     
     
  {% endfor %}</div>
+
+ <script>
+  const tipsButton = document.getElementById('show-next-race')
+
+  function loadingStatus(){
+        tipsButton.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
+  }
+ </script>
 {% endblock %}

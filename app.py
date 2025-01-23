@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, flash, redirect, session, jsonify
 from mailservice import email_confirmation_email, email_password_reset
+from flask_limiter.util import get_remote_address
+from flask_limiter import Limiter
 from flask_session import Session
 from flask_bcrypt import Bcrypt 
 from mongo_db import HorseMongo
@@ -7,6 +9,8 @@ from datetime import timedelta
 import threading
 import random
 import time
+
+
 
 #### Halloween routes
 import sqlFunctions
@@ -17,13 +21,25 @@ horses = HorseMongo()  # DB Instance
 
 
 app = Flask(__name__)
+
 app.config['SECRET_KEY'] = 're6723$^@#@(sdaKLNEKA@!###@_'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 app.config["SESSION_TYPE"] = "filesystem"
 
 bcrypt = Bcrypt(app) 
 Session(app)           
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day"],
+    storage_uri="memory://",
+)
+
         
+
+
+
 
 
 def email_verification_timeout(user):
@@ -49,6 +65,7 @@ def email_verification_timeout(user):
 ############################################
 
 
+
 @app.get("/") 
 def home():
     try: 
@@ -60,9 +77,12 @@ def home():
 
 
 
+
 ############################################
 ####        Tips and Results Page       ####
 ############################################
+
+
 
 @app.get('/tips')
 def tips():  
@@ -83,6 +103,7 @@ def tips():
         flash("Please Login/Register! ")
         return redirect('/login')
     
+
 
 @app.get('/results')
 def results():
@@ -120,7 +141,9 @@ def get_wall():
         return render_template('home.html', homeActive=True)
 
 
+
 @app.post('/submitPost')
+@limiter.limit('10 per 1 hour')
 def submit_post():
     try:
         if session['user'] is not None:          
@@ -133,6 +156,8 @@ def submit_post():
     except KeyError:
         flash("Something went wrong with post!")
         return render_template('wallPost.html', postsActive=True, user=session['user'])
+    
+    
     
     
 @app.post('/removePost')
@@ -194,16 +219,18 @@ def login():
     return render_template('login.html', loginActive=True)
 
 
+
 @app.get('/logout')
 def logout():
     session.clear()
     return redirect('/')
 
 
+
 @app.get('/register')
+@limiter.limit("10 per day")
 def register():
     
-
     try:
         if session['user'] is not None:
             
@@ -266,6 +293,7 @@ def register_post():
 
      
 @app.get('/passwordreset')
+@limiter.limit("5 per day")
 def password_reset():
     
     '''Password reset form. Just collects the users email'''
@@ -273,7 +301,9 @@ def password_reset():
     return render_template('/password/form1.html')
 
 
+
 @app.post('/passwordEmail')
+@limiter.limit("3 per day")
 def check_email():
     
     '''Returned from the form with users email to reset the password'''
@@ -301,9 +331,11 @@ def check_email():
     else:
         flash('Inncorect email address!')
         return render_template('/password/form1.html')
+    
        
     
 @app.post('/passwordCodeVerification')   
+@limiter.limit("20 per day")
 def check_code():
     
     user = session['reset']
@@ -328,6 +360,7 @@ def check_code():
    
     
 @app.post('/submitNewPassword')
+@limiter.limit("10 per day")
 def update_new_password():
     
     '''Push new password to db'''
@@ -354,6 +387,7 @@ def update_new_password():
     
     
 @app.post('/emailVerification')
+@limiter.limit("3 per day")
 def verify_email():
     user = session['user']
     code = request.form['code']
@@ -426,4 +460,4 @@ def remove_spots():
  
      
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

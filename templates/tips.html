@@ -12,13 +12,16 @@
 
 {% endif %}
 {% endwith %}
-<a id="already-raced-button" href="/results" class="btn btn-secondary" onclick="loadingStatus()" style="margin: 10px; width: 185px;">Show Todays Results</a>
-
+<a href="/results" type="button" id="already-raced-button"  class="btn btn-secondary" onclick="loadingStatus()" style="margin: 10px; width: 185px;">Show Todays Results</a>
 <div style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 750px; justify-content: center; align-items: center;">
 
   <script>
     const showButton = document.getElementById('already-raced-button');
     showButton.style.display = 'none';
+
+    function loadingStatus(){
+        showButton.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
+  }
   </script>
 <div class="row text-white" style="width: 100vw;">
   <div class="col-12 text-center">
@@ -35,11 +38,14 @@
 
 <script>
   showButton.style.display = 'flex';
-
-  function loadingStatus(){
-        showButton.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
-  }
 </script>
+<style>
+  #already-raced-button{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
 
   {% endif %}
 
