@@ -17,6 +17,7 @@ idna==3.10
 itsdangerous==2.2.0
 Jinja2==3.1.5
 limits==4.0.1
+lz4==4.3.3
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
 mdurl==0.1.2
@@ -28,6 +29,7 @@ pymongo==4.10.1
 python-dotenv==1.0.1
 requests==2.32.3
 rich==13.9.4
+sqlitecloud==0.0.83
 typing_extensions==4.12.2
 urllib3==2.3.0
 Werkzeug==3.1.3
