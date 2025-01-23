@@ -89,13 +89,13 @@ def tips():
     
     try:
         if session['user'] is not None:
-            # user = horses.check_user_exsists(session['user'])
-            # if user['verified']:
-            data = horses.retrive_mongo_data()
-            return render_template('tips.html', tipsActive=True, data=data, timenow=(time.time() + 300), user=session['user']) 
-            # else:
-                # flash("Email not Verified!!")
-                # return redirect('/login')    
+            user = horses.check_user_exsists(session['user'])
+            if user['verified']:
+                data = horses.retrive_mongo_data()
+                return render_template('tips.html', tipsActive=True, data=data, timenow=(time.time() + 300), user=session['user']) 
+            else:
+                flash("Email not Verified!!")
+                return redirect('/login')    
         else:
             flash("Please Login/Register! ")
             return redirect('/login')
@@ -109,13 +109,13 @@ def tips():
 def results():
     try:
         if session['user'] is not None:
-            # user = horses.check_user_exsists(session['user'])
-            # if user['verified']:
+            user = horses.check_user_exsists(session['user'])
+            if user['verified']:
                 data = horses.retrive_mongo_result_data()
                 return render_template('results.html', tipsActive=True, data=data, timenow=(time.time() + 300), user=session['user']) 
-            # else:
-            #     flash("Email not Verified!!")
-            #     return redirect('/login')    
+            else:
+                flash("Email not Verified!!")
+                return redirect('/login')    
         else:
             flash("Please Login/Register! ")
             return redirect('/login')
@@ -327,7 +327,7 @@ def check_email():
             email = threading.Thread(target=email_password_reset, args=(user_exsists['email'], ver_code))
             email.start()
 
-            return render_template('/password/checkcode.html')       
+            return render_template('/password/checkcode.html', email=user_exsists['email'])       
     else:
         flash('Inncorect email address!')
         return render_template('/password/form1.html')
@@ -460,4 +460,4 @@ def remove_spots():
  
      
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
