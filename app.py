@@ -275,10 +275,10 @@ def register_post():
         
     
     horses.register_user(firstname, lastname, email, hashed_password, mobile_number, street_address, mail_address, state, post_code, ver_code, verified, attemps)
-    session['user'] = email
+    session['regi'] = email
     
     email_confirmation_email(email, ver_code)
-    clean_up_thread = threading.Thread(target=email_verification_timeout, args=(session['user'],))
+    clean_up_thread = threading.Thread(target=email_verification_timeout, args=(session['regi'],))
     clean_up_thread.daemon = True
     clean_up_thread.start()
     
@@ -389,7 +389,7 @@ def update_new_password():
 @app.post('/emailVerification')
 @limiter.limit("3 per day")
 def verify_email():
-    user = session['user']
+    user = session['regi']
     code = request.form['code']
     
     user_exsists = horses.check_user_exsists(user)
@@ -460,4 +460,4 @@ def remove_spots():
  
      
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
