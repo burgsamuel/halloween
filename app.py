@@ -32,7 +32,7 @@ Session(app)
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day"],
+    default_limits=["20000 per day"],
     storage_uri="memory://",
 )
 
@@ -143,7 +143,7 @@ def get_wall():
 
 
 @app.post('/submitPost')
-@limiter.limit('10 per 1 hour')
+@limiter.limit('100 per 1 hour')
 def submit_post():
     try:
         if session['user'] is not None:          
@@ -228,7 +228,7 @@ def logout():
 
 
 @app.get('/register')
-@limiter.limit("10 per day")
+@limiter.limit("1000 per day")
 def register():
     
     try:
@@ -293,7 +293,7 @@ def register_post():
 
      
 @app.get('/passwordreset')
-@limiter.limit("5 per day")
+@limiter.limit("500 per day")
 def password_reset():
     
     '''Password reset form. Just collects the users email'''
@@ -303,7 +303,7 @@ def password_reset():
 
 
 @app.post('/passwordEmail')
-@limiter.limit("3 per day")
+@limiter.limit("300 per day")
 def check_email():
     
     '''Returned from the form with users email to reset the password'''
@@ -335,7 +335,7 @@ def check_email():
        
     
 @app.post('/passwordCodeVerification')   
-@limiter.limit("20 per day")
+@limiter.limit("600 per day")
 def check_code():
     
     user = session['reset']
@@ -360,7 +360,7 @@ def check_code():
    
     
 @app.post('/submitNewPassword')
-@limiter.limit("10 per day")
+@limiter.limit("300 per day")
 def update_new_password():
     
     '''Push new password to db'''
@@ -387,7 +387,7 @@ def update_new_password():
     
     
 @app.post('/emailVerification')
-@limiter.limit("3 per day")
+@limiter.limit("3500 per day")
 def verify_email():
     user = session['regi']
     code = request.form['code']
