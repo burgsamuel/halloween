@@ -32,7 +32,7 @@ Session(app)
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["20000 per day"],
+    default_limits=["200000 per day"],
     storage_uri="memory://",
 )
 
