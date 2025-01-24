@@ -296,6 +296,24 @@ class HorseMongo():
         return response
     
     
+    def add_post_like(self, post_id):
+        
+        ''' Checks to See if the email address has been verified and updates it '''
+        
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
 
+        database = client.get_database('horse_data')
+        user = database.get_collection('posts')
+        
+        collection = user.find_one({"_id": ObjectId(post_id)})
+        likes = int(collection['likes']) + 1
+        
+        query_filter = {"_id": ObjectId(post_id)}
+        update_operation = {'$set': { 'likes' : likes }}
+        
+        response = user.update_one(query_filter, update_operation)
+        
+        return response
 
               
