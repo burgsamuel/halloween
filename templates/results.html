@@ -7,7 +7,7 @@
 
 {% block content%}
 
-<a id="show-next-race" href="/tips" class="btn btn-secondary" style="margin: 10px; width: 185px;" onclick="loadingStatus()">Show Next Races</a>
+<a id="show-next-race" href="/tips" class="btn btn-secondary" style="margin: 10px; width: 185px; box-shadow: 3px 3px 3px rgba(78, 78, 78, 0.6);" onclick="loadingStatus()">Show Next Races</a>
 
 <div style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 750px; justify-content: center; align-items: center;">
 
@@ -23,7 +23,7 @@
     {% if i['raceTime'] <= timenow %} 
 
     
-    <div class="row-flex" style="box-shadow: 3px 3px 5px rgba(5, 5, 5, 0.826); margin: 7px 5px; background-color: rgba(255, 255, 255, 0.826); padding-top: 5px; padding-left: 15px;padding-right: 20px; border-radius: 10px; min-width: 340px; max-width: 450px;">
+    <div class="row-flex" style="box-shadow: 3px 3px 5px rgba(5, 5, 5, 0.826); margin: 7px 5px; background-color: rgb(234, 233, 233); padding-top: 5px; padding-left: 15px;padding-right: 20px; border-radius: 10px; min-width: 340px; max-width: 450px;">
       <div class="row">
         <div class="col-9 text-start">
             <strong style="padding: 0;">{{i['race']}} </strong>

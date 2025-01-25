@@ -12,7 +12,7 @@
 
 {% endif %}
 {% endwith %}
-<a href="/results" type="button" id="already-raced-button"  class="btn btn-secondary" onclick="loadingStatus()" style="margin: 10px; width: 185px;">Show Todays Results</a>
+<a href="/results" type="button" id="already-raced-button"  class="btn btn-secondary" onclick="loadingStatus()" style="margin: 10px; width: 185px; box-shadow: 3px 3px 3px rgba(78, 78, 78, 0.6);">Show Todays Results</a>
 <div style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 750px; justify-content: center; align-items: center;">
 
   <script>
@@ -53,7 +53,7 @@
 
 {% if i['raceTime'] > timenow %} <!-- Start of second if block -->
 
-  <div class="row-flex" style=" box-shadow: 3px 3px 5px rgba(5, 5, 5, 0.826); margin: 7px 5px; background-color: rgba(255, 255, 255, 0.826); padding-top: 5px; padding-left: 15px;padding-right: 20px; border-radius: 10px; min-width: 340px; max-width: 450px;">
+  <div class="row-flex" style=" box-shadow: 3px 3px 5px rgba(5, 5, 5, 0.826); margin: 7px 5px; background-color: rgb(234, 233, 233); padding-top: 5px; padding-left: 15px;padding-right: 20px; border-radius: 10px; min-width: 340px; max-width: 450px;">
     <div class="row">
       <div class="col-9 text-start">
           <strong style="padding: 0;">{{i['race']}} </strong>
