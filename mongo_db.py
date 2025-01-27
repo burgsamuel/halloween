@@ -77,21 +77,23 @@ class HorseMongo():
             'post_code' : post_code,
             'ver_code' : ver_code,
             'verified' : verified,
-            'attemps' : attemps
+            'attemps' : attemps,
+            'time_logged': 0,
+            'time_logged_wall_post': int(time.time())
         })
         
         return user
     
     
 
-    # def update_Users(self):
+    def update_Users(self):
         
-    #     client = MongoClient(self.url, server_api=ServerApi('1'))
+        client = MongoClient(self.url, server_api=ServerApi('1'))
 
-    #     database = client.get_database('horse_data')
-    #     user = database.get_collection('Users')
+        database = client.get_database('horse_data')
+        user = database.get_collection('Users')
 
-    #     user.update_many( {} , { '$set': { 'time_logged_wall_post': '' } })
+        user.update_many( {} , { '$set': { 'time_logged_wall_post': 10 } })
 
     
     def log_user(self, email):

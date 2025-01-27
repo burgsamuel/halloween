@@ -71,7 +71,7 @@ def home():
     try: 
         if session['user']:
             user_data = horses.return_user_data(session['user'])
-            user_last_on_wall = user_data['time_logged_wall_post']
+            user_last_on_wall = int(user_data['time_logged_wall_post'])
             resp = horses.check_wall_post_time()
             for i in resp:
                 last_post_time = i['timeStored']
@@ -98,7 +98,7 @@ def tips():
         if session['user'] is not None:
             user = horses.check_user_exsists(session['user'])
             if user['verified']:
-                user_last_on_wall = user['time_logged_wall_post']
+                user_last_on_wall = int(user['time_logged_wall_post'])
                 resp = horses.check_wall_post_time()
                 data = horses.retrive_mongo_data()
                 for i in resp:
@@ -365,7 +365,7 @@ def check_code():
     else:
         response, results = horses.attempt_counter(user)
 
-        if int(results > 2):
+        if int(results > 5):
             session.clear()
             return redirect('/')
         else:
