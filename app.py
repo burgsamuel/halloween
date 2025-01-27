@@ -70,8 +70,16 @@ def email_verification_timeout(user):
 def home():
     try: 
         if session['user']:
-            pass
-        return render_template('home.html', homeActive=True, user=session['user'])
+            user_data = horses.return_user_data(session['user'])
+            user_last_on_wall = user_data['time_logged_wall_post']
+            resp = horses.check_wall_post_time()
+            for i in resp:
+                last_post_time = i['timeStored']
+            new_posts = False    
+            if user_last_on_wall < last_post_time:
+                new_posts = True
+                
+        return render_template('home.html', homeActive=True, user=session['user'], new_posts=new_posts)
     except KeyError:
         return render_template('home.html', homeActive=True)
 
@@ -83,7 +91,6 @@ def home():
 ############################################
 
 
-
 @app.get('/tips')
 def tips():  
     
@@ -91,8 +98,15 @@ def tips():
         if session['user'] is not None:
             user = horses.check_user_exsists(session['user'])
             if user['verified']:
+                user_last_on_wall = user['time_logged_wall_post']
+                resp = horses.check_wall_post_time()
                 data = horses.retrive_mongo_data()
-                return render_template('tips.html', tipsActive=True, data=data, timenow=(time.time() + 300), user=session['user']) 
+                for i in resp:
+                    last_post_time = i['timeStored']
+                new_posts = False    
+                if user_last_on_wall < last_post_time:
+                    new_posts = True
+                return render_template('tips.html', tipsActive=True, data=data, timetest=int(time.time()), timenow=int(time.time() + 300), user=session['user'], new_posts=new_posts) 
             else:
                 flash("Email not Verified!!")
                 return redirect('/login')    
@@ -112,7 +126,7 @@ def results():
             user = horses.check_user_exsists(session['user'])
             if user['verified']:
                 data = horses.retrive_mongo_result_data()
-                return render_template('results.html', tipsActive=True, data=data, timenow=(time.time() + 300), user=session['user']) 
+                return render_template('results.html', tipsActive=True, data=data, timenow=int(time.time() + 300), user=session['user']) 
             else:
                 flash("Email not Verified!!")
                 return redirect('/login')    
@@ -134,7 +148,7 @@ def results():
 def get_wall():
     try: 
         if session['user'] is not None:
-            data = horses.retrive_post_data()
+            data = horses.retrive_post_data(session['user'])
             return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
     except KeyError:
         flash("Login to access this feature!")
@@ -150,7 +164,7 @@ def submit_post():
             username = session['user']
             post_text = request.form['postText']
         horses.store_post_data(username, post_text)
-        data = horses.retrive_post_data()
+        data = horses.retrive_post_data(session['user'])
         return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
             
     except KeyError:
@@ -166,7 +180,7 @@ def remove_post():
         if session['user'] is not None:          
             post_id = request.form['id_of_post']
             horses.delete_post_data(post_id)
-        data = horses.retrive_post_data()
+        data = horses.retrive_post_data(session['user'])
         return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
             
     except KeyError:
@@ -180,12 +194,12 @@ def add_likes():
         if session['user'] is not None:       
             post_id = request.form['like-button']
             horses.add_post_like(post_id)
-        data = horses.retrive_post_data()
+        data = horses.retrive_post_data(session['user'])
         return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
             
     except KeyError:
         flash("Something went wrong with the like button!")
-        data = horses.retrive_post_data()
+        data = horses.retrive_post_data(session['user'])
         return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
 
 

@@ -83,6 +83,36 @@ class HorseMongo():
         return user
     
     
+
+    # def update_Users(self):
+        
+    #     client = MongoClient(self.url, server_api=ServerApi('1'))
+
+    #     database = client.get_database('horse_data')
+    #     user = database.get_collection('Users')
+
+    #     user.update_many( {} , { '$set': { 'time_logged_wall_post': '' } })
+
+    
+    def log_user(self, email):
+        ''' Log the timer on user database, going to be used to check for new posts etc '''
+        
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
+
+        database = client.get_database('horse_data')
+        user = database.get_collection('Users')
+        
+        query = {'email' : email}
+        update = { '$set' : { 'time_logged' : int(time.time())} }
+        
+        user.update_one(query, update)
+        
+        return
+    
+    
+    
+    
     def check_user_exsists(self, email):
         
         ''' Checks to See if the email address has been registered already '''
@@ -93,10 +123,32 @@ class HorseMongo():
         database = client.get_database('horse_data')
         user = database.get_collection('Users')
         
+        query = {'email' : email}
+        update = { '$set' : { 'time_logged' : int(time.time())} }
+        
+        user.update_one(query, update)
+
         # Check if User has been registered already
         response = user.find_one({'email': email})
         
         return response
+    
+    
+    
+    def return_user_data(self, email):
+        
+        ''' Checks to See if the email address has been registered already '''
+        
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
+
+        database = client.get_database('horse_data')
+        user = database.get_collection('Users')
+
+        response = user.find_one({'email': email})
+        
+        return response
+    
     
 
     def update_verified(self, email):
@@ -205,30 +257,6 @@ class HorseMongo():
         
         return response
 
-
-
-    ############################################################
-    ##########            User Interaction           ###########
-    ############################################################
-    
-
-    def store_time_user_visited(self, user):
-        
-        '''This is to track notifications for posts and to see if a user has seen posts'''
-        
-        client = MongoClient(self.url, server_api=ServerApi('1'))
-
-        database = client.get_database('horse_data')
-        horses = database.get_collection('User')
-        
-        time_stored = time.time()
-        
-        query_filter = {'email': user}
-        update_operation = {'$Add': { 'lookAtPosts' : time_stored }}
-        
-        response = horses.update_one(query_filter, update_operation)
-        print(response)
-        return response      
     
         
     ############################################################
@@ -244,7 +272,7 @@ class HorseMongo():
         database = client.get_database('horse_data')
         horses = database.get_collection('posts')
         
-        time_stored = time.time()
+        time_stored = int(time.time())
         
         formated_time = time.strftime('%c', time.localtime(time_stored))
             
@@ -266,7 +294,7 @@ class HorseMongo():
     
     
     
-    def retrive_post_data(self):
+    def retrive_post_data(self, email):
         
         # Create a new client and connect to the server
         client = MongoClient(self.url, server_api=ServerApi('1'))
@@ -275,6 +303,30 @@ class HorseMongo():
         horses = database.get_collection('posts')
         
         response = horses.find().sort({'timeStored': -1})
+        
+        
+        #Update user timer when they last visited post page        
+        user = database.get_collection('Users')
+        query = {'email' : email}
+        update = { '$set' : { 'time_logged_wall_post' : int(time.time())} }
+        
+        user.update_one(query, update)
+        
+        
+        return response
+    
+    
+    def check_wall_post_time(self):
+        
+        
+        '''Retrive the last post and time to make notifications for user'''
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
+
+        database = client.get_database('horse_data')
+        horses = database.get_collection('posts')
+        
+        response = horses.find().sort({'timeStored': -1}).limit(1)
         
         return response
 
@@ -314,6 +366,8 @@ class HorseMongo():
         
         response = user.update_one(query_filter, update_operation)
         
+        
         return response
 
               
+

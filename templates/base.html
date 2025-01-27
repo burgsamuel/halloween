@@ -21,7 +21,22 @@
         background-repeat: no-repeat;
         background-attachment: fixed;
       }
-      
+      a {
+        transition: all .2s;
+      }
+      a :active{
+        box-shadow: none;
+        scale: .95;
+        opacity: .7;
+      }
+      button {
+        transition: all .2s;
+      }
+      button:active{
+        box-shadow: none;
+        scale: .95;
+        opacity: .7;
+      }
     </style>
   </head>
   <body>
@@ -51,9 +66,6 @@
       </nav>
       <hr class="hr">
     {% block content %}{% endblock %}
-
-
-
 
   </body>
   <script

@@ -12,6 +12,20 @@
 
 {% endif %}
 {% endwith %}
+{% if new_posts %}
+<div class="button-div">
+  <a href="/wallPost"><button type="button" style="margin: 10px 10px; width: 150px; box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.6);" class="btn btn-secondary">
+    Posts
+    <div style="font-size: .8rem; width: 50px; height: 20px; background-color: rgba(255, 0, 0, 0.895); border-radius: 15px; position: absolute;">NEW</div>
+  </button></a>
+</div>
+{% else %}
+<div class="button-div">
+  <a href="/wallPost"><button type="button" style="margin: 10px 10px; width: 150px; box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.6);" class="btn btn-secondary">Posts</button></a>
+</div>
+{% endif %}
+
+
 <a href="/results" type="button" id="already-raced-button"  class="btn btn-secondary" onclick="loadingStatus()" style="margin: 10px; width: 185px; box-shadow: 3px 3px 3px rgba(78, 78, 78, 0.6);">Show Todays Results</a>
 <div style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 750px; justify-content: center; align-items: center;">
 
@@ -23,6 +37,7 @@
         showButton.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
   }
   </script>
+  
 <div class="row text-white" style="width: 100vw;">
   <div class="col-12 text-center">
     {% set cursor_list = data | list %}
@@ -56,7 +71,7 @@
   <div class="row-flex" style=" box-shadow: 3px 3px 5px rgba(5, 5, 5, 0.826); margin: 7px 5px; background-color: rgb(234, 233, 233); padding-top: 5px; padding-left: 15px;padding-right: 20px; border-radius: 10px; min-width: 340px; max-width: 450px;">
     <div class="row">
       <div class="col-9 text-start">
-          <strong style="padding: 0;">{{i['race']}} </strong>
+          <strong style="padding: 0;">{{i['race']}}</strong>
       </div>
       <div class="col-3 text-end" style="padding: 0; font-size:.9em;">{{i['stringTime']}}</div>  
     </div>
