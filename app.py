@@ -84,6 +84,10 @@ def home():
         return render_template('home.html', homeActive=True)
 
 
+@app.get("/disclaimer")
+def disclaimer():
+    return render_template('disclaimer.html')
+
 
 
 ############################################
