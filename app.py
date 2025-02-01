@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, flash, redirect, session, jsonify
 from mailservice import email_confirmation_email, email_password_reset
 from flask_limiter.util import get_remote_address
+from bson.json_util import dumps
 from flask_limiter import Limiter
 from flask_session import Session
 from flask_bcrypt import Bcrypt 
@@ -9,6 +10,7 @@ from datetime import timedelta
 import threading
 import random
 import time
+
 
 
 
@@ -35,10 +37,6 @@ limiter = Limiter(
     default_limits=["200000 per day"],
     storage_uri="memory://",
 )
-
-        
-
-
 
 
 
@@ -89,6 +87,33 @@ def disclaimer():
     return render_template('disclaimer.html')
 
 
+
+@app.post('/api_data')
+@limiter.limit("2000 per hour")
+def api_data():
+    
+    user = request.form['username']
+    password = request.form['password']
+    print(user)
+    print(password)
+    user_data = horses.return_user_data(user)
+    
+
+    if user_data is not None:
+    
+        hashed_password = user_data['hashed_password']        
+        password_checked = bcrypt.check_password_hash(hashed_password, password)
+        
+        if password_checked:
+            data = horses.retrive_mongo_data()
+            json_data = dumps(data)
+            return jsonify(json_data)
+        else:
+            return jsonify({"password": "Invalid"})            
+    else:
+        return jsonify({"User": "Invalid"})
+    
+    
 
 ############################################
 ####        Tips and Results Page       ####
@@ -478,4 +503,4 @@ def remove_spots():
  
      
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True , host='0.0.0.0')
