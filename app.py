@@ -25,7 +25,7 @@ horses = HorseMongo()  # DB Instance
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 're6723$^@#@(sdaKLNEKA@!###@_'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=10)
 app.config["SESSION_TYPE"] = "filesystem"
 
 bcrypt = Bcrypt(app) 
