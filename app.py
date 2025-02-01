@@ -94,8 +94,6 @@ def api_data():
     
     user = request.form['username']
     password = request.form['password']
-    print(user)
-    print(password)
     user_data = horses.return_user_data(user)
     
 
@@ -503,4 +501,4 @@ def remove_spots():
  
      
 if __name__ == "__main__":
-    app.run(debug=True , host='0.0.0.0')
+    app.run()
