@@ -92,6 +92,7 @@ def disclaimer():
 @limiter.limit("2000 per hour")
 def api_data():
     
+    
     user = request.form['username']
     password = request.form['password']
     user_data = horses.return_user_data(user)
@@ -105,7 +106,7 @@ def api_data():
         if password_checked:
             data = horses.retrive_mongo_data()
             json_data = dumps(data)
-            return jsonify(json_data)
+            return json_data
         else:
             return jsonify({"password": "Invalid"})            
     else:
