@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}
+    Login
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  {% for message in messages %}
+    <p style=" margin-left: 10px; max-width: 350px; border: 1px solid tomato; background-color: rgba(255, 99, 71, 0.473); color: aliceblue; border-radius: 3px; padding: 10px;" >{{ message }}</p>
+  {% endfor %}
+
+{% endif %}
+{% endwith %}
+ 
+<h3 class="text-white" style="margin: 10px;">Please Login </h2>
+<form action="/login" method="post">
+    <div class="form-group">
+        <input type="text" class="form-control" id="email-form" name="email" placeholder="Enter Email" style="max-width: 350px; margin: 10px;" required>
+    </div>
+    <div class="form-group">
+    <input type="password" class="form-control" id="password-form" name="password" placeholder="Password" style="max-width: 350px; margin: 10px;" required>
+    </div>
+    <button type="submit" class="btn btn-secondary" value="Login" style="margin: 10px; width: 125px;" id="submit-button" onclick="loadingStatus()">
+      Submit 
+    </button>
+    <a href="/register"><button type="button" class="btn btn-secondary" style="margin-left: 55px;">Register</button></a>
+
+</form> 
+<hr class="hr"><hr class="hr">
+<a class="text-white" style="margin-left: 10px;" href="/passwordreset">Forgot Password?</a>
+
+<script>
+  const emailForm = document.getElementById('email-form');
+  const passwordForm = document.getElementById('password-form');
+
+  const buttonSubmit = document.getElementById('submit-button');
+  function loadingStatus(){
+
+    let value1 = emailForm.value;
+    let value2 = passwordForm.value;
+
+    if (value1 === '' || value2 === ''){
+      return
+    }
+    else{
+      buttonSubmit.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
+    }
+
+  }
+</script>
+{% endblock %}

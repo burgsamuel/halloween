@@ -1,0 +1,108 @@
+{% extends 'base.html' %} 
+{% block head %} 
+<meta http-equiv="refresh" content="300">
+{% endblock%}
+
+{% block title %} Results {% endblock %}
+
+{% block content%}
+
+<a id="show-next-race" href="/tips" class="btn btn-secondary" style="margin: 10px; width: 185px; box-shadow: 3px 3px 3px rgba(78, 78, 78, 0.6);" onclick="loadingStatus()">Show Next Races</a>
+
+<div style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 750px; justify-content: center; align-items: center;">
+
+  <div class="row text-white" style="width: 100vw;">
+    <div class="col-12 text-center">
+      {% set cursor_list = data | list %}
+      {% set length = cursor_list | length %}
+      Total Tips Today 👉 {{ length }}
+    </div>
+  </div>
+    {% for i in cursor_list %} <!-- Loop over the data -->
+    
+    {% if (i['raceTime'] + 299) <= timenow %} 
+
+    
+    <div class="row-flex" style="box-shadow: 3px 3px 5px rgba(5, 5, 5, 0.826); margin: 7px 5px; background-color: rgb(234, 233, 233); padding-top: 5px; padding-left: 15px;padding-right: 20px; border-radius: 10px; min-width: 340px; max-width: 450px;">
+      <div class="row">
+        <div class="col-9 text-start">
+            <strong style="padding: 0;">{{i['race']}} </strong>
+        </div>
+        <div class="col-3 text-end" style="padding: 0; font-size:.9em;">{{i['stringTime']}}</div>  
+      </div>
+      <div class="row">
+    
+        {% if i['raceDetails'] %}
+        <div class="col-7 text-start" style="font-size: .8em; padding: 5px; font-weight: 600;"> {{i['raceDetails']['horseNumber']}}. {{i['horse']}} {{i['raceDetails']['gateNumber']}} </div>
+        <div class="col-5 text-end" style="font-size: .7em; padding: 0;">Win: ${{i['raceDetails']['winPrice']}}  Place: ${{i['raceDetails']['placePrice']}} </div>
+        {% else %}
+        <div class="col-7 text-start" style="font-size: .8em; padding: 5px; font-weight: 600;">🏇 {{i['horse']}} </div>
+        <div class="col-5 text-end" style="font-size: .7em; padding: 0;">Win: $ -  Place: $ - </div>
+        {% endif %}
+        
+      </div>
+
+      {% if i['raceDetails']%}
+      <div class="row text-center" style="opacity: .8;">
+        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['raceDetails']['lastFinishes']}}</div>
+        {% if i['conditions'] %}
+        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['condition']}}</div>
+        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['weather']}}</div>
+        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['temp']}}°C</div>
+        {% endif %}
+      </div>
+      {% endif %}
+    
+    
+      <div class="row" >
+        <div class="col-7 text-start" style="padding-top: 5px; padding-right: 0; padding-left: 7px; font-size:.8em;">J: {{i['jockeyName']}}</div>
+      </div>
+    
+        <div class="row">
+          <div class="col-9 text-start" style="padding-right: 0; padding-left: 7px; font-size:.75em;">T: {{i['trainerName']}}</div>
+          <div class="col-1" style="padding-bottom: 6px;"><img src="{{i['bibLink'] }}" alt="bibLink" style="width: 20px; margin: 0;"></div>
+          <div class="col-2 text-end" style="font-size: .7em; padding: 0;">Score: {{i['score']}}</div>
+        </div>
+
+        {% if i['finishPosition'] %}
+
+            {% if i['finishPosition'] == '1' %}
+            <div class="row-flex align-items-center">
+                <div class="col text-center" style="background-color: rgba(215, 212, 24, 0.868); border-radius: 5px;">Position: {{i['finishPosition']}} </div>
+            </div>
+            {% elif i['finishPosition'] == '2' %}
+            <div class="row-flex align-items-center">
+                <div class="col text-center" style="background-color: rgba(65, 215, 24, 0.505);  border-radius: 5px;">Position: {{i['finishPosition']}} </div>
+            </div>
+            {% elif i['finishPosition'] == '3' %}
+            <div class="row-flex align-items-center">
+                <div class="col text-center" style="background-color: rgba(24, 215, 167, 0.868);  border-radius: 5px;">Position: {{i['finishPosition']}} </div>
+            </div>
+            {% else %}
+            <div class="row-flex align-items-center">
+                <div class="col text-center">Position: {{i['finishPosition']}} </div>
+            </div>
+            {% endif %}
+
+        {% else %}
+        <div class="row-flex align-items-center">
+            <div class="col text-center">Position: - </div>
+        </div>
+
+    {% endif %}
+    </div>
+
+
+    {% endif %}
+    
+    
+ {% endfor %}</div>
+
+ <script>
+  const tipsButton = document.getElementById('show-next-race')
+
+  function loadingStatus(){
+        tipsButton.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
+  }
+ </script>
+{% endblock %}
