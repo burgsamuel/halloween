@@ -9,6 +9,7 @@
   {% endfor %}
 {% endif %}
 {% endwith %}
+
 <div class="container-fluid text-center" style="margin-left: auto; margin-right: auto;">
 <h5 class="text-white" style="font-size: .9rem;"> The Punters house - Social Media Links</h5>
 <a href="https://www.facebook.com/profile.php?id=61569943590810"><button class="btn btn-primary" style=" width: 125px; box-shadow: 3px 3px 3px rgba(78, 78, 78, 0.6);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16">
@@ -27,18 +28,18 @@
   <div class="button-div" style="margin: 5px;">
   <a href="/results"><button type="button" style=" width: 150px; box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.6);" class="btn btn-secondary">Results 🏇</button></a>
   </div>
-  {% if new_posts %}
+    {% if new_posts %}
   <div class="button-div">
     <a href="/wallPost"><button type="button" style="margin: 10px 0px; width: 150px; box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.6);" class="btn btn-secondary">
       Posts 👋 
       <div style="font-size: .8rem; width: 50px; height: 20px; background-color: rgba(255, 0, 0, 0.895); border-radius: 15px; position: absolute;">NEW</div>
     </button></a>
   </div>
-  {% else %}
+    {% else %}
   <div class="button-div">
     <a href="/wallPost"><button type="button" style="margin: 10px 0px; width: 150px; box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.6);" class="btn btn-secondary">Posts</button></a>
   </div>
-  {% endif %}
+    {% endif %}
   {% else %}
   <div class="button-div" style="margin: 20px;">
       <a href="/login"><button type="button" style="width: 150px; box-shadow: 3px 3px 3px rgba(94, 94, 94, 0.6);" class="btn btn-secondary">login</button></a>
@@ -49,7 +50,7 @@
 {% if user %}
 <!-- <h5 class="text-white text-center" style="backdrop-filter: blur(10px); padding: 15px 0px; border-radius: 10px; width: 330px; margin-left: auto; margin-right: auto;">Remember to check todays tips.</h5> -->
 {% else %}
-<h5 class="text-white text-center">Please login/Register to continue</h5>
+<h5 class="text-white text-center" style="background-color: rgba(0, 0, 0, 0.886); padding: 20px; border-radius:10px;">Please login/Register 👆</h5>
 {% endif %}
 <br>
 <br>

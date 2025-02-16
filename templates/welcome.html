@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Welcome!
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  {% for message in messages %}
+    <p style="max-width: 350px; border: 1px solid rgba(22, 185, 87, 0.667); background-color: rgba(71, 255, 126, 0.473); color: aliceblue; border-radius: 3px; padding: 10px; margin-left: 10px;" >{{ message }}</p>
+  {% endfor %}
+
+{% endif %}
+{% endwith %}
+<br>
+<a href="/"><button type="button" style="margin-left: 10px; width: 125px;" class="btn btn-secondary">Home</button></a>
+<a href="/tips"><button type="button" style="margin-left: 10px; width: 125px;" class="btn btn-secondary">Tips</button></a>
+<br>
+
+<div class="text-left text-white" style="background-color: rgba(0, 0, 0, 0.855); padding: 20px; border-radius: 10px;">
+    <p class="text-center text-white" style="background-color: rgba(0, 0, 0, 0.855); font-size: 1.2rem;">Please read the following 👇</p>
+<h1>Important Information</h1>
+<ul>
+  <li><strong>Login:</strong>  After logging in, your session will be remembered for 30 days. However, you may need to log in again at random times. This is because updates to the app/website may remove session data, requiring you to log in again.</li>
+  <li><strong>Posts Page:</strong> There is a "Posts" page for members to share race tips or any information related to sports. Please keep your posts civil and thoughtful. Abusive behavior towards other members will not be tolerated.</li>
+  <li><strong>Updates and Features:</strong> Updates and new features will be added over time. We have a dedicated team working on this app/website, and they will do their best to assist with any issues. If you encounter a problem, please send an email via the contacts page. Sometimes bugs go unfixed because no one is aware of them, so your feedback is valuable.</li>
+  <li><strong>Betting Strategies:</strong> Talk to other members about their betting strategies and how they use scores and tips. Betting on every tip may not be considered responsible gambling. The tips are designed to help you make better decisions when looking for a winner.</li>
+  <li><strong>Navigation:</strong> Clicking "The Punters House" at the top will quickly take you to the home screen. 👍</li>
+  <li><strong>Enjoyment and Rewards:</strong> Please enjoy yourself and be ready to receive a merchandise care package and information regarding a day at the races.</li>
+</div>
+  <br>
+
+
+{% endblock %}

@@ -1,12 +1,14 @@
+from mailservice import email_confirmation_email, email_password_reset, email_multiple_login_attemps
 from flask import Flask, render_template, request, flash, redirect, session, jsonify
-from mailservice import email_confirmation_email, email_password_reset
 from flask_limiter.util import get_remote_address
+from datetime import timedelta, datetime
+from requests.auth import HTTPBasicAuth
 from bson.json_util import dumps
 from flask_limiter import Limiter
 from flask_session import Session
 from flask_bcrypt import Bcrypt 
 from mongo_db import HorseMongo
-from datetime import timedelta
+import requests
 import threading
 import random
 import time
@@ -25,7 +27,7 @@ horses = HorseMongo()  # DB Instance
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 're6723$^@#@(sdaKLNEKA@!###@_'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=10)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 app.config["SESSION_TYPE"] = "filesystem"
 
 bcrypt = Bcrypt(app) 
@@ -45,11 +47,11 @@ def email_verification_timeout(user):
     ''' Run a seperate thread to check if user verified their account in 10min
         If the user fails to varify their information will be deleted '''
     
-    time_start = time.time()
+    time_start = int(time.time())
     time_end = time_start + 600
 
     while True:
-        if time.time() >= time_end: # adding 10min 
+        if int(time.time()) >= time_end: # adding 10min 
             horses.delete_user_registration(user) # Function checks verification before deleting
             return
         else:
@@ -63,23 +65,39 @@ def email_verification_timeout(user):
 ############################################
 
 
-
 @app.get("/") 
 def home():
-    try: 
+    try:
+        try:
+            if session['regi']:
+                count = 0
+                if count > 3:
+                    session.pop("regi", default=None)
+                else:
+                    count += 1
+                    return render_template('register.html')
+        except KeyError:
+            pass
+        
         if session['user']:
+
+            print(f"Home Page: {session['user']} at: {datetime.now()}")
+
             user_data = horses.return_user_data(session['user'])
+
             user_last_on_wall = int(user_data['time_logged_wall_post'])
             resp = horses.check_wall_post_time()
+            
             for i in resp:
                 last_post_time = i['timeStored']
             new_posts = False    
             if user_last_on_wall < last_post_time:
                 new_posts = True
-                
-        return render_template('home.html', homeActive=True, user=session['user'], new_posts=new_posts)
+
+            return render_template('home.html', homeActive=True, user=session['user'], new_posts=new_posts)
     except KeyError:
         return render_template('home.html', homeActive=True)
+
 
 
 @app.get("/disclaimer")
@@ -88,10 +106,79 @@ def disclaimer():
 
 
 
+
+############################################
+####    Paypal payment membership       ####
+############################################
+
+@app.get('/welcome')
+def welcome_page():
+    if session['user']:
+        user_data = horses.return_user_data(session['user'])
+        if user_data['verified'] and user_data['paid']:
+            print(user_data)
+            flash("The Punters House Society thanks you for your payment and wants to welcome you aboard!")
+            return render_template('welcome.html', user=session['user'])
+        else:
+            return redirect('/register')
+    else:
+        return redirect('/')
+
+
+@app.get("/membership_payment") 
+def member_payment():
+    if session['user']:
+        user = session['user']
+        amount = 10 # membership fees $AUD
+
+        return render_template('payments/payment.html', amount=amount, user=user)
+    else:
+        return redirect("/register")
+    
+
+@app.post("/payments/<order_id>/capture")
+def capture_payment(order_id):  # Checks and confirms payment
+    captured_payment = approve_payment(order_id)
+
+    if session['user'] is not None:
+
+        if captured_payment['status'] == 'COMPLETED':
+            time_paid = int(time.time())
+            time_expire = time_paid + 31536002   # This is one year in seconds 
+            horses.recieve_membership_payment(session['user'], time_paid, time_expire)
+
+    # Redirect from within payment
+    return jsonify(captured_payment)
+
+def approve_payment(order_id):
+    
+    api_link = f"https://api-m.sandbox.paypal.com/v2/checkout/orders/{order_id}/capture"
+    client_id = "ASWtN-17xb16o1pIVYeMEIJDZJ3HuRvfpIznYS8Zr6lHEhAoCzN_B0jtWkxXpmpcjCwJqNdJPK9PR_Ms"
+    secret = "ENJOGTvA4OvdVIABcwmK0b6f67UDyNgIub7mvyn_X1REstqmXiJ9KeNCY0XfOo6Wulcxq-tOu-PArN0B"
+    basic_auth = HTTPBasicAuth(client_id, secret)
+    headers = {
+        "Content-Type": "application/json",
+    }
+    response = requests.post(url=api_link, headers=headers, auth=basic_auth)
+    response.raise_for_status()
+    json_data = response.json()
+
+    return json_data
+
+
+
+############################################
+####            Api Page                ####
+############################################
+
+
 @app.post('/api_data')
 @limiter.limit("2000 per hour")
 def api_data():
     
+    '''
+    API for collected horse data. Currently available to registered members.
+    '''
     
     user = request.form['username']
     password = request.form['password']
@@ -125,16 +212,21 @@ def tips():
     try:
         if session['user'] is not None:
             user = horses.check_user_exsists(session['user'])
+            time_now = int(time.time())
             if user['verified']:
-                user_last_on_wall = int(user['time_logged_wall_post'])
-                resp = horses.check_wall_post_time()
-                data = horses.retrive_mongo_data()
-                for i in resp:
-                    last_post_time = i['timeStored']
-                new_posts = False    
-                if user_last_on_wall < last_post_time:
-                    new_posts = True
-                return render_template('tips.html', tipsActive=True, data=data, timetest=int(time.time()), timenow=int(time.time() + 300), user=session['user'], new_posts=new_posts) 
+                if user['paid'] and (time_now <= user['paid_expire']):
+                    user_last_on_wall = int(user['time_logged_wall_post'])
+                    resp = horses.check_wall_post_time()
+                    data = horses.retrive_mongo_data()
+                    for i in resp:
+                        last_post_time = i['timeStored']
+                    new_posts = False    
+                    if user_last_on_wall < last_post_time:
+                        new_posts = True
+                    return render_template('tips.html', tipsActive=True, data=data, timetest=time_now, timenow=time_now + 300, user=session['user'], new_posts=new_posts) 
+                else:
+                    flash("You have registered your email - Your Membership has not been paid!")
+                    return redirect('/membership_payment')
             else:
                 flash("Email not Verified!!")
                 return redirect('/login')    
@@ -236,30 +328,209 @@ def add_likes():
 ####          login and Logout          ####
 ############################################
 
-@app.route('/login', methods=['POST', 'GET'])
-def login():
+logins_attemps = {}
+login_wait = {}
+
+def login_try(user):
+    if user in logins_attemps:
+        counter = logins_attemps[user]
+        counter += 1
+        if counter <= 2:
+            logins_attemps[user] = counter
+            return False
+        else:
+            print(f"[WARNING] -- app.py login_try() -- {user} -- added to wait timer -- MULTIPLE ATTEMPS ****")
+            if user in login_wait:
+                pass
+            else:
+                login_wait[user] = int(time.time())
+            return True
+    else:
+        logins_attemps[user] = 0
+        return False
+    
+
+def login_wait_timer(user):
+
+    timer_time = 600
+    time_base = int(time.time())
+    if user in login_wait:
+        time_start = login_wait[user]
+        test = time_base - time_start
+        if test > timer_time:
+            pass
+        else:
+            return True       
+    else:
+        return False
+
+
+@app.get('/login')
+def login_get():
+
+    try:
+
+        time_check = login_wait_timer(session["lots_of_logins"])
+
+        if time_check:
+
+            print(f"[WARNING] -- app.py -- login route -- {session["lots_of_logins"]} Still Attemping!")
+            user_exsists = horses.check_user_exsists(session["lots_of_logins"])
+
+            if user_exsists is not None:
+
+                """ 
+                    Send An email to a registered user if there has been multiple login attemps against their account
+                """
+
+                email_send = threading.Thread(target=email_multiple_login_attemps, args=(session["lots_of_logins"],))
+                email_send.start()
+
+                flash(f"Slow Down Phar Lap - Email has been sent to {session["lots_of_logins"]}")
+                return render_template('home.html')
+            
+            else:
+
+                print(f"[WARNING] -- app.py -- login -- POSSIBLE EMAIL GUESS")
+                flash(f"Slow Down Phar Lap!!!!")
+                return render_template('home.html')
+            
+        else:
+
+            ''' Timer has expired for login attemps, so clear the user_name from the lists'''
+            try:
+                logins_attemps.pop(session["lots_of_logins"])
+                login_wait.pop(session["lots_of_logins"])
+                session.pop("lots_of_logins", default=None)
+                return render_template('login.html', loginActive=True)
+
+            except KeyError:
+
+                return render_template('login.html', loginActive=True)
+        
+    except KeyError:
+
+        return render_template('login.html', loginActive=True)    
+    
+
+
+@app.post("/login")
+def login_post():
+
     if request.method == 'POST':
+
         user_name = request.form['email']
         password = request.form['password']
-        user_exsists = horses.check_user_exsists(user_name)
+        time_check = login_wait_timer(user_name)
+
+        if not time_check:
+
+            if "@" not in user_name:
+
+                user_exsists = None
+
+            else:
+
+                user_exsists = horses.check_user_exsists(user_name)
+
+        else:
+
+            print("[WARNING] -- app.py -- login post -- user activated login timer")
+            flash(f"Slow Down Butter Cup")
+            return render_template('home.html')
 
         if user_exsists is not None:
             
             hashed_password = user_exsists['hashed_password']
-            
             password_checked = bcrypt.check_password_hash(hashed_password, password)
             
             if password_checked:
-                session['user'] = request.form['email']
-                return redirect('/tips')
+
+                try:
+                    
+                    if user_name in logins_attemps:
+                        logins_attemps.pop(user_name)
+                    if user_name in login_wait:
+                        login_wait.pop(user_name)
+                    session.pop("lots_of_logins", default=None)
+
+                    session['user'] = request.form['email']
+                    print("[SUCCESS] -- app.py -- login Post -- login attempts user data cleared! ")
+
+                    return redirect('/tips')
+                
+                except KeyError:
+
+                    session['user'] = request.form['email']
+                    return redirect('/tips')
+            
             else:
-                flash("Login details are not correct!")
-                return render_template('login.html', loginActive=True)
+
+                result = login_try(user_name)
+                if result:    
+
+                    session["lots_of_logins"] = user_name      
+                    flash(f"Slow Down Butter Cup")
+                    return render_template('home.html')
+                
+                else:
+
+                    print(f'[LOW] -- app.py -- login route -- {user_name} -- failed login!')
+                    flash("Login details are not correct!")
+                    return render_template('login.html', loginActive=True)
         else:
+
+            print(f'[LOW] -- app.py -- login route -- {user_name} -- failed login!')
             flash("Username not valid!")
             return render_template('login.html', loginActive=True)
-    return render_template('login.html', loginActive=True)
+        
+    else:
 
+        try:
+
+            time_check = login_wait_timer(session["lots_of_logins"])
+
+            if time_check:
+
+                print(f"[WARNING] -- app.py -- login route -- {session["lots_of_logins"]} Still Attemping!")
+                user_exsists = horses.check_user_exsists(session["lots_of_logins"])
+
+                if user_exsists is not None:
+
+                    """ 
+                        Send An email to a registered user if there has been multiple login attemps against their account
+                    """
+
+                    email_send = threading.Thread(target=email_multiple_login_attemps, args=(session["lots_of_logins"],))
+                    email_send.start()
+
+                    flash(f"Slow Down Phar Lap - Email has been sent to {session["lots_of_logins"]}")
+                    return render_template('home.html')
+                
+                else:
+
+                    print(f"[WARNING] -- app.py -- login -- POSSIBLE EMAIL GUESS")
+                    flash(f"Slow Down Phar Lap!!!!")
+                    return render_template('home.html')
+                
+            else:
+
+                ''' Timer has expired for login attemps, so clear the user_name from the lists'''
+                try:
+                    logins_attemps.pop(session["lots_of_logins"])
+                    login_wait.pop(session["lots_of_logins"])
+                    session.pop("lots_of_logins", default=None)
+
+                    return render_template('login.html', loginActive=True)
+                
+                except KeyError:
+                    return render_template('login.html', loginActive=True)
+            
+        except KeyError:
+
+            return render_template('login.html', loginActive=True)
+
+        
 
 
 @app.get('/logout')
@@ -269,26 +540,30 @@ def logout():
 
 
 
+
+############################################
+####           Registration             ####
+############################################
+
 @app.get('/register')
 @limiter.limit("1000 per day")
 def register():
     
     try:
+
         if session['user'] is not None:
             
             flash("You Have Registered Already!")
             return render_template('loginState.html', registerActive=True, user=session['user'])
+        
         else:
+
             return render_template('form.html', registerActive=True) 
+        
     except KeyError:
+
         return render_template('form.html', registerActive=True)
 
-
-
-
-############################################
-####           Registration             ####
-############################################
 
 @app.post('/register')
 def register_post():
@@ -305,6 +580,7 @@ def register_post():
     ver_code = random.randint(1000, 9999)
     verified = False
     attemps = 0
+
     #check if email already exsists
     data = horses.check_user_exsists(email)
     
@@ -439,11 +715,16 @@ def verify_email():
 
     
     if int(code) == int(stored_code):
-        session['user'] = user
-        response = horses.update_verified(user)
 
-        flash("You have successfully been verified")
-        return redirect('/tips')
+        # User code successfully added
+        session.pop('regi', default=None) # Clears the regi key after verification success
+
+        session['user'] = user
+
+        horses.update_verified(user)
+        flash("Congratulations for Signing up to The Punters House Society")
+        return redirect('/membership_payment')
+    
     else:
         response, results = horses.attempt_counter(user)
 
@@ -502,4 +783,4 @@ def remove_spots():
  
      
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True, host='0.0.0.0')

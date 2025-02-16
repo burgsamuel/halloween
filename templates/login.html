@@ -16,10 +16,10 @@
 <h3 class="text-white" style="margin: 10px;">Please Login </h2>
 <form action="/login" method="post">
     <div class="form-group">
-        <input type="text" class="form-control" id="email-form" name="email" placeholder="Enter Email" style="max-width: 350px; margin: 10px;" required>
+        <input type="text" class="form-control" id="email-form" name="email" placeholder="Enter Email" style="max-width: 350px; margin: 10px;" maxlength="200" required>
     </div>
     <div class="form-group">
-    <input type="password" class="form-control" id="password-form" name="password" placeholder="Password" style="max-width: 350px; margin: 10px;" required>
+    <input type="password" class="form-control" id="password-form" name="password" placeholder="Password" style="max-width: 350px; margin: 10px;" maxlength="200" required>
     </div>
     <button type="submit" class="btn btn-secondary" value="Login" style="margin: 10px; width: 125px;" id="submit-button" onclick="loadingStatus()">
       Submit 

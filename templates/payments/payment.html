@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Member payment
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+  {% for message in messages %}
+    <p style="max-width: 350px; background-color: rgba(255, 99, 71, 0.473); color: aliceblue; border-radius: 3px; padding: 10px; margin-left: 10px;" >{{ message }}</p>
+  {% endfor %}
+
+{% endif %}
+{% endwith %}
+
+{% if success %}
+<p class="text-center text-white" style="font-size: 1.3rem; padding: 20px; background-color:rgba(0, 0, 0, 0.901); border-radius:10px;">
+    <span>Welcome {{user}}</span><br><br>
+    Thanks for the payment <br>
+</p>
+{% else %}
+<p class="text-center text-white" style="font-size: 1.3rem; padding: 20px; background-color:rgba(0, 0, 0, 0.901); border-radius:10px;">
+    <span>Welcome {{user}}</span><br><br>
+    To continue with your yearly membership, a payment of ${{amount}} is needed. <br>
+    <span style="font-size: .9rem;">For peace of mind, there are no automatic renewals or any other payment traps.</span>
+</p>
+{% endif %}
+<!-- Replace "test" with your own sandbox Business account app client ID -->
+<script src="https://www.paypal.com/sdk/js?client-id=ASWtN-17xb16o1pIVYeMEIJDZJ3HuRvfpIznYS8Zr6lHEhAoCzN_B0jtWkxXpmpcjCwJqNdJPK9PR_Ms&currency=AUD"></script>
+<div class="row text-center"  style="width: 80%; margin-left: auto; margin-right: auto; border-radius: 10px;">
+    <div id="paypal-button-container" class="container-fluid text-center" style="background-color: rgba(0, 0, 0, 0.584); margin: 10px; border-radius: 10px;"></div>
+    <script>
+        paypal.Buttons({
+            // Sets up the transaction when a payment button is clicked
+            createOrder: (data, actions) => {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: {{amount}} // Can also reference a variable or function
+                        }
+                    }]
+                });
+            },
+            // Finalize the transaction after payer approval
+            // Finalize the transaction on the server after payer approval
+            onApprove: (data, actions) => {
+                return fetch(`/payments/${data.orderID}/capture`, {
+                    method: "post",
+                })
+                    .then((response) => response.json())
+                    .then((orderData) => {
+                        // Successful capture! For dev/demo purposes:
+                        console.log('Capture result', orderData, JSON.stringify(orderData, null, 2));
+                        const transaction = orderData.purchase_units[0].payments.captures[0];
+                        // alert(`Transaction ${transaction.status}: ${transaction.id}\n\nSee console for all available details`);
+                        // When ready to go live, remove the alert and show a success message within this page. For example:
+                        const element = document.getElementById('paypal-button-container');
+                        element.innerHTML = '<h3>Thank you for your payment!</h3>';
+                        window.location.href = '/welcome';
+                    });
+            }
+        }).render('#paypal-button-container');
+    </script>
+</div>
+
+
+
+{% endblock %}
