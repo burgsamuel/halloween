@@ -274,7 +274,7 @@ class HorseMongo():
         database = client.get_database('horse_data')
         horses = database.get_collection('posts')
         
-        time_stored = int(time.time())
+        time_stored = int(time.time()) + 57600
         
         formated_time = time.strftime('%c', time.localtime(time_stored))
             
