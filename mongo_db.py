@@ -12,8 +12,8 @@ class HorseMongo():
     
         load_dotenv()
         self.password = os.getenv('MONGOPASSWORD')
-        self.url = f'mongodb+srv://admin:{self.password}@cluster0.r2jvy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
-    
+        
+        self.url = f'mongodb+srv://samburg:{self.password}@samsdata.266tr.mongodb.net/?retryWrites=true&w=majority&appName=SamsData'
     
     
     ############################################################
