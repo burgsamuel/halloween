@@ -10,12 +10,7 @@ from datetime import timedelta
 import threading
 import random
 import time
-
-
-
-
-#### Halloween routes
-import sqlFunctions
+import os
 
 
 horses = HorseMongo()  # DB Instance
@@ -24,7 +19,7 @@ horses = HorseMongo()  # DB Instance
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = 're6723$^@#@(sdaKLNEKA@!###@_'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=10)
 app.config["SESSION_TYPE"] = "filesystem"
 
@@ -201,7 +196,6 @@ def submit_post():
     
     
     
-    
 @app.post('/removePost')
 def remove_post():
     try:
@@ -250,8 +244,8 @@ def login():
             password_checked = bcrypt.check_password_hash(hashed_password, password)
             
             if password_checked:
-                session['user'] = request.form['email']
-                return redirect('/tips')
+                    session['user'] = request.form['email']
+                    return redirect('/tips')
             else:
                 flash("Login details are not correct!")
                 return render_template('login.html', loginActive=True)
@@ -387,8 +381,8 @@ def check_code():
     stored_code = user_exsists['ver_code']
     
     if int(code) == int(stored_code):
+        
         session['user'] = user
-
         return render_template('/password/newPassword.html')
     else:
         response, results = horses.attempt_counter(user)
@@ -456,47 +450,6 @@ def verify_email():
             flash("Sorry that is an incorrect Code")
             return render_template('register.html')
 
-     
-     
-     
-#######################################################
-#####           Halloween APP                   #######
-#######################################################     
-  
-@app.get("/spotter")
-def home_page():
-    return render_template("/halloween/homepage.html")
-
-
-@app.get("/location")
-def add_location():
-    return render_template("/halloween/addLocation.html")
-
-
-@app.get("/mapView")
-def map_view():
-    return render_template("/halloween/mapview.html")
-
-
-@app.get("/mapData")
-def collect_map_data():
-    data = sqlFunctions.retrieve_data()
-    return jsonify(data)
-
-
-@app.post("/locationData")
-def recieve_location():
-    data = request.get_json()
-    sqlFunctions.save_data(data)
-    return {"Status": "Recieved location and Saved ✅"}
-
-
-@app.post("/RemoveUserSpots")
-def remove_spots():
-    data = request.get_json()
-    res = sqlFunctions.remove_spots(data['id'])
-    return {"TotalSpots": res,
-            "Success": "Spots Removed"}   
      
    
  
