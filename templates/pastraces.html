@@ -38,9 +38,9 @@
     <div class="row-flex" style="box-shadow: 3px 3px 5px rgba(5, 5, 5, 0.826); margin: 7px 5px; background-color: rgb(234, 233, 233); padding-top: 5px; padding-left: 15px;padding-right: 20px; border-radius: 10px; min-width: 340px; max-width: 450px;">
       <div class="row">
         <div class="col-9 text-start">
-            <strong style="padding: 0;">{{i['race']}} </strong>
+            <strong style="padding: 0; font-size: 1em">{{i['race']}} </strong>
         </div>
-        <div class="col-3 text-end" style="padding: 0; font-size:.9em;">{{i['stringTime']}}</div>  
+        <!-- <div class="col-3 text-end" style="padding: 0; font-size:.9em;">{{i['stringTime']}}</div>   -->
       </div>
       <div class="row">
     
@@ -70,11 +70,19 @@
         <div class="col-7 text-start" style="padding-top: 5px; padding-right: 0; padding-left: 7px; font-size:.8em;">J: {{i['jockeyName']}}</div>
       </div>
     
+      {% if i['bibLink'] == '' %}
+        <div class="row">
+          <div class="col-9 text-start" style="padding-right: 0; padding-left: 7px; font-size:.75em;">T: {{i['trainerName']}}</div>
+          <div class="col-1" style="padding-bottom: 6px;"><p style="width: 20px; margin: 0;">👕</p></div>
+          <div class="col-2 text-end" style="font-size: .7em; padding: 0;">Score: {{i['score']}}</div>
+        </div>        
+      {% else %}
         <div class="row">
           <div class="col-9 text-start" style="padding-right: 0; padding-left: 7px; font-size:.75em;">T: {{i['trainerName']}}</div>
           <div class="col-1" style="padding-bottom: 6px;"><img src="{{i['bibLink'] }}" alt="👕" style="width: 20px; margin: 0;"></div>
           <div class="col-2 text-end" style="font-size: .7em; padding: 0;">Score: {{i['score']}}</div>
         </div>
+        {% endif %}
 
         {% if i['finishPosition'] %}
 
