@@ -52,7 +52,8 @@
             <div class="navbar-nav">
               <a {% if homeActive %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="/">Home</a>
               <a {% if tipsActive %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="/tips">Todays Tips</a>
-              <a {% if postsActive %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="/wallPost">Posts</a>
+              <a {% if postsActive %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="/wallPost">Member Posts</a>
+              <a {% if pastResults %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="/pastresults">Past Results</a>
               {% if user %}
               <a {% if loginActive %}class="nav-link active"{% else %}class="nav-link"{% endif %} href="/logout">Logout</a>
               {% else %}

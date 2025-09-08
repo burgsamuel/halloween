@@ -106,9 +106,33 @@ def api_data():
             return jsonify({"password": "Invalid"})            
     else:
         return jsonify({"User": "Invalid"})
+   
+   
+    
+@app.get('/pastresults')
+@limiter.limit("8000 per hour") 
+def past_results():
+    
+    try:
+        if session['user'] is not None:
+            user = horses.check_user_exsists(session['user'])
+            if user['verified']:
+                data = horses.retrive_mongo_past_results()
+                return render_template('pastraces.html', pastResults=True, data=data, timenow=int(time.time()), user=session['user'])  
+            else:
+                flash("Email not Verified!!")
+                return redirect('/login')    
+        else:
+            flash("Please Login/Register! ")
+            return redirect('/login')
+    except KeyError:
+        flash("Please Login/Register! ")
+        return redirect('/login')    
     
     
-
+    
+    
+    
 ############################################
 ####        Tips and Results Page       ####
 ############################################

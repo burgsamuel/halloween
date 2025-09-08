@@ -12,7 +12,7 @@ class HorseMongo():
     
         load_dotenv()
         self.password = os.getenv('MONGOPASSWORD')
-        
+        # self.url = f'mongodb+srv://admin:{self.password}@cluster0.r2jvy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
         self.url = f'mongodb+srv://samburg:{self.password}@samsdata.266tr.mongodb.net/?retryWrites=true&w=majority&appName=SamsData'
     
     
@@ -34,8 +34,6 @@ class HorseMongo():
         return response
         
 
-
-
     def retrive_mongo_result_data(self):
         
         # Create a new client and connect to the server
@@ -49,7 +47,19 @@ class HorseMongo():
         return response
     
 
+    def retrive_mongo_past_results(self):
+        
+        # Create a new client and connect to the server
+        client = MongoClient(self.url, server_api=ServerApi('1'))
 
+        database = client.get_database('horse_data')
+        horses = database.get_collection('previous_results')
+        
+        response = horses.find().sort({'raceTime': -1})
+        
+        return response
+    
+    
     ############################################################
     ##########            User Registration          ###########
     ############################################################    
@@ -274,9 +284,9 @@ class HorseMongo():
         database = client.get_database('horse_data')
         horses = database.get_collection('posts')
         
-        time_stored = int(time.time()) 
+        time_stored = int(time.time())#washington to sydney time
         
-        formated_time = time.strftime('%c', time.localtime(time_stored + 39600))
+        formated_time = time.strftime('%c', time.localtime(time_stored  + 39600 ))
             
         if formated_time[0] == '0' or formated_time[0] == 0:
             formated_time = formated_time[1:]
