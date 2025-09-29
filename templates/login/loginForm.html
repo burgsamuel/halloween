@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/128/8745/8745230.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Form</title>
+  <link rel="stylesheet" href="{{ url_for('static',filename='styles/loginForm.css') }}" />
+</head>
+
+<body>
+
+  <header>
+    <a href="/"><button>Home</button></a>
+    <a href="/registrationForm"><button>Register</button></a>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <p
+      style="max-width: 350px; background-color: rgba(235, 98, 35, 0.748); color: aliceblue; border-radius: 3px; padding: 10px; margin-left: 10px;">
+      {{ message }}</p>
+    {% endfor %}
+
+    {% endif %}
+    {% endwith %}
+
+  </header>
+  <form action="/login" method="post" id="loginform">
+    <h1>🎃 Login Form 🍬</h1>
+    <div id="usernamefield">
+      <label for="username">User Name</label><br>
+      <input type="text" name="username" id="username" required maxlength="100">
+    </div>
+    <div id="passwordfield">
+      <label for="password">Password</label><br>
+      <input type="password" name="password" id="password" required maxlength="100">
+    </div>
+    <div id="form-button-div">
+      <button type="submit" id="submitbutton">Login</button>
+
+    </div>
+
+  </form>
+  <a href="/resetpassword">Forgot your password?</a>
+</body>
+
+<script>
+  const submitButton = document.getElementById("submitbutton");
+
+  function onSubmitClick(){
+    submitButton.innerText = "Loading!"
+  };
+  submitButton.addEventListener("click", onSubmitClick);
+</script>
+</html>

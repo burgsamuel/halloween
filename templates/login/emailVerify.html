@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/128/8745/8745230.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email</title>
+  <link rel="stylesheet" href="{{ url_for('static',filename='styles/verifyemail.css') }}" />
+</head>
+
+<body>
+
+  <header>
+    <a href="/"><button>Home</button></a>
+    <a href="/logout"><button>Restart</button></a>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <p
+      style="max-width: 350px; background-color: rgba(235, 98, 35, 0.748); color: aliceblue; border-radius: 3px; padding: 10px; margin-left: 10px;">
+      {{ message }}</p>
+    {% endfor %}
+
+    {% endif %}
+    {% endwith %}
+
+  </header>
+  <form action="/verificationcode" method="post" id="verifyemail">
+    <h1>🎃 Verify Email 🍬</h1>
+    <p>
+      Welcome {{user}}</p>
+    <p>
+      Verification Code has been sent to: {{email}}</p>
+    <p>
+      Please check your email and enter the verification code with in the next 8 minutes.
+    </p>
+    <div id="codefield">
+      <label for="code">Code 👉</label>
+      <input type="text" name="code" id="code" required maxlength="10" minlength="3">
+    </div>
+    <div id="form-button-div">
+      <button type="submit" id="submitbutton">Submit</button>
+    </div>
+  </form>
+</body>
+
+<script>
+  const submitButton = document.getElementById("submitbutton");
+
+  function onSubmitClick(){
+    submitButton.innerText = "Loading!"
+  };
+  submitButton.addEventListener("click", onSubmitClick);
+</script>
+</html>

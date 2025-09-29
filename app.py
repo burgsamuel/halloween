@@ -1,482 +1,460 @@
-from flask import Flask, render_template, request, flash, redirect, session, jsonify
-from mailservice import email_confirmation_email, email_password_reset
-from flask_limiter.util import get_remote_address
-from bson.json_util import dumps
-from flask_limiter import Limiter
-from flask_session import Session
-from flask_bcrypt import Bcrypt 
-from mongo_db import HorseMongo
-from datetime import timedelta
+from quart import Quart, render_template, request, jsonify, flash, session, redirect
+
+import mailservice
 import threading
-import random
+import mongodb
 import time
 import os
 
 
-horses = HorseMongo()  # DB Instance
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ModuleNotFoundError:
+    print("dotenv not found!")
 
 
 
-app = Flask(__name__)
+app = Quart(__name__)
 
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=10)
+app.secret_key = os.getenv("SECRETKEY")
 app.config["SESSION_TYPE"] = "filesystem"
 
-bcrypt = Bcrypt(app) 
-Session(app)           
+login_attemps = []
 
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200000 per day"],
-    storage_uri="memory://",
-)
-
-
-
-def email_verification_timeout(user):
-    
-    ''' Run a seperate thread to check if user verified their account in 10min
-        If the user fails to varify their information will be deleted '''
-    
-    time_start = time.time()
-    time_end = time_start + 600
-
-    while True:
-        if time.time() >= time_end: # adding 10min 
-            horses.delete_user_registration(user) # Function checks verification before deleting
-            return
-        else:
-            time.sleep(30)
-
-
-
-
-############################################
-####            Home Page               ####
-############################################
-
-
-
-@app.get("/") 
-def home():
-    try: 
-        if session['user']:
-            user_data = horses.return_user_data(session['user'])
-            user_last_on_wall = int(user_data['time_logged_wall_post'])
-            resp = horses.check_wall_post_time()
-            for i in resp:
-                last_post_time = i['timeStored']
-            new_posts = False    
-            if user_last_on_wall < last_post_time:
-                new_posts = True
-                
-        return render_template('home.html', homeActive=True, user=session['user'], new_posts=new_posts)
-    except KeyError:
-        return render_template('home.html', homeActive=True)
-
-
-@app.get("/disclaimer")
-def disclaimer():
-    return render_template('disclaimer.html')
-
-
-
-@app.post('/api_data')
-@limiter.limit("2000 per hour")
-def api_data():
-    
-    
-    user = request.form['username']
-    password = request.form['password']
-    user_data = horses.return_user_data(user)
-    
-
-    if user_data is not None:
-    
-        hashed_password = user_data['hashed_password']        
-        password_checked = bcrypt.check_password_hash(hashed_password, password)
-        
-        if password_checked:
-            data = horses.retrive_mongo_data()
-            json_data = dumps(data)
-            return json_data
-        else:
-            return jsonify({"password": "Invalid"})            
-    else:
-        return jsonify({"User": "Invalid"})
-   
-   
-    
-@app.get('/pastresults')
-@limiter.limit("8000 per hour") 
-def past_results():
-    
+@app.get('/')
+async def home_page():
     try:
-        if session['user'] is not None:
-            user = horses.check_user_exsists(session['user'])
-            if user['verified']:
-                data = horses.retrive_mongo_past_results()
-                return render_template('pastraces.html', pastResults=True, data=data, timenow=int(time.time()), user=session['user'])  
-            else:
-                flash("Email not Verified!!")
-                return redirect('/login')    
-        else:
-            flash("Please Login/Register! ")
-            return redirect('/login')
+        if session["verification_pending"]:
+            return await render_template("login/emailVerify.html")
     except KeyError:
-        flash("Please Login/Register! ")
-        return redirect('/login')    
-    
-    
-    
-    
-    
-############################################
-####        Tips and Results Page       ####
-############################################
-
-
-@app.get('/tips')
-def tips():  
-    
+        pass
     try:
-        if session['user'] is not None:
-            user = horses.check_user_exsists(session['user'])
-            if user['verified']:
-                user_last_on_wall = int(user['time_logged_wall_post'])
-                resp = horses.check_wall_post_time()
-                data = horses.retrive_mongo_data()
-                for i in resp:
-                    last_post_time = i['timeStored']
-                new_posts = False    
-                if user_last_on_wall < last_post_time:
-                    new_posts = True
-                return render_template('tips.html', tipsActive=True, data=data, timetest=int(time.time()), timenow=int(time.time()), user=session['user'], new_posts=new_posts) 
-            else:
-                flash("Email not Verified!!")
-                return redirect('/login')    
-        else:
-            flash("Please Login/Register! ")
-            return redirect('/login')
+        if session["logged_in"]:
+            return await render_template("homepage.html", user=session["logged_in"])
     except KeyError:
-        flash("Please Login/Register! ")
-        return redirect('/login')
-    
+        return await render_template("homepage.html")
 
 
-@app.get('/results')
-def results():
-    try:
-        if session['user'] is not None:
-            user = horses.check_user_exsists(session['user'])
-            if user['verified']:
-                data = horses.retrive_mongo_result_data()
-                return render_template('results.html', tipsActive=True, data=data, timenow=int(time.time()), user=session['user'])  
-            else:
-                flash("Email not Verified!!")
-                return redirect('/login')    
-        else:
-            flash("Please Login/Register! ")
-            return redirect('/login')
-    except KeyError:
-        flash("Please Login/Register! ")
-        return redirect('/login')
-
-
-
-############################################
-####            Post/Forum             ####
-############################################
-
-
-@app.get('/wallPost')
-def get_wall():
-    try: 
-        if session['user'] is not None:
-            data = horses.retrive_post_data(session['user'])
-            return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
-    except KeyError:
-        flash("Login to access this feature!")
-        return render_template('home.html', homeActive=True)
-
-
-
-@app.post('/submitPost')
-@limiter.limit('100 per 1 hour')
-def submit_post():
-    try:
-        if session['user'] is not None:          
-            username = session['user']
-            post_text = request.form['postText']
-        horses.store_post_data(username, post_text)
-        data = horses.retrive_post_data(session['user'])
-        return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
-            
-    except KeyError:
-        flash("Something went wrong with post!")
-        return render_template('wallPost.html', postsActive=True, user=session['user'])
-    
-    
-    
-@app.post('/removePost')
-def remove_post():
-    try:
-        if session['user'] is not None:          
-            post_id = request.form['id_of_post']
-            horses.delete_post_data(post_id)
-        data = horses.retrive_post_data(session['user'])
-        return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
-            
-    except KeyError:
-        flash("Something went wrong with post!")
-        return render_template('wallPost.html', postsActive=True, user=session['user'])
-    
-
-@app.post('/addlike')
-def add_likes():
-    try:
-        if session['user'] is not None:       
-            post_id = request.form['like-button']
-            horses.add_post_like(post_id)
-        data = horses.retrive_post_data(session['user'])
-        return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
-            
-    except KeyError:
-        flash("Something went wrong with the like button!")
-        data = horses.retrive_post_data(session['user'])
-        return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
-
-
-
-############################################
-####          login and Logout          ####
-############################################
-
-@app.route('/login', methods=['POST', 'GET'])
-def login():
-    if request.method == 'POST':
-        user_name = request.form['email']
-        password = request.form['password']
-        user_exsists = horses.check_user_exsists(user_name)
-
-        if user_exsists is not None:
-            
-            hashed_password = user_exsists['hashed_password']
-            
-            password_checked = bcrypt.check_password_hash(hashed_password, password)
-            
-            if password_checked:
-                    session['user'] = request.form['email']
-                    return redirect('/tips')
-            else:
-                flash("Login details are not correct!")
-                return render_template('login.html', loginActive=True)
-        else:
-            flash("Username not valid!")
-            return render_template('login.html', loginActive=True)
-    return render_template('login.html', loginActive=True)
-
-
-
-@app.get('/logout')
-def logout():
+@app.get("/logout")
+async def logout():
     session.clear()
-    return redirect('/')
+    await flash("Logged Out Successfully.")
+    return await render_template("homepage.html")
+    
+    
+@app.get("/location")
+async def add_location():
+    return await render_template("addLocation.html")
 
 
+@app.get("/userspots")
+async def update_user_spots():
+    try:
+        if session["logged_in"]:
+            userspots = mongodb.retrieve_user_spots(session["logged_in"])
+            return ({"spots" : userspots})
+    except KeyError:
+        return ( { "spots" : "Fail" } )
 
-@app.get('/register')
-@limiter.limit("1000 per day")
-def register():
+
+@app.get("/mapView")
+async def map_view():
+    return await render_template("mapview.html")
+
+
+@app.get("/mapData")
+async def collect_map_data():
+    data = mongodb.retrieve_data()
+    return jsonify(data)
+
+
+@app.post("/locationData")
+# Store a new Spot after checking login and timer
+async def recieve_location():
+    try:
+        if session["logged_in"]:
+            user_data = mongodb.check_user_exsists(session["logged_in"])
+            try:
+                total_spots = user_data['total_spots']
+                last_spot_time = user_data["time_last_spot"]
+                time_now = time.time()
+                if time_now >= last_spot_time + 60 and total_spots <= 100:
+                    data = await request.get_json()
+                    mongodb.store_mongo_data(data, session["logged_in"])
+                    increament_user_spots = threading.Thread(target=mongodb.update_user_spots, args=(session["logged_in"],))
+                    increament_user_spots.start()
+                    return {"Status": "Recieved location and Saved ✅"}
+                else:
+                    return { "TimeLeft": ((last_spot_time + 60) - time_now), "TimeWait" : True } 
+            except KeyError:
+                print('Error with key in adding location data')
+                return {"KeyError": True}                
+    except KeyError:
+        return {"Failed": True}
+    
+    
+@app.post("/RemoveUserSpots")
+async def remove_spots():
+    try:
+        if session["logged_in"]:
+            # data = await request.get_json()
+            # print(data)
+            res = mongodb.remove_users_spots(session['logged_in'])
+            return {"TotalSpots": res,
+                "Success": "Spots Removed from data base"}
+    except KeyError:
+        return {"TotalSpots": 0,
+                "Fail": "Login or Register!"}
+    
+    
+########################################################
+## Login End Points
+########################################################
+
+
+@app.get("/loginForm")
+async def login_form():
     
     try:
-        if session['user'] is not None:
-            
-            flash("You Have Registered Already!")
-            return render_template('loginState.html', registerActive=True, user=session['user'])
-        else:
-            return render_template('form.html', registerActive=True) 
+        if session["logged_in"]:
+            await flash("You are already logged in 🎃")
+            return await render_template("homepage.html", user=session["logged_in"])
     except KeyError:
-        return render_template('form.html', registerActive=True)
-
-
-
-
-############################################
-####           Registration             ####
-############################################
-
-@app.post('/register')
-def register_post():
-    firstname = request.form['firstname']
-    lastname = request.form['lastname']
-    email = request.form['email']
-    password = request.form['password']
-    mobile_number = request.form['mobile']
-    street_address = request.form['address']
-    mail_address = request.form['mailingaddress']
-    state = request.form['state']
-    post_code = request.form['postcode']
+        pass
+        
+    try:
+        ip_address = request.remote_addr
+    except Exception as error:
+        print(error)
+        ip_address = "Address Unavailable"
+    login_data = {
+        "ip" : ip_address,
+        "attemps" : 0,
+        "end_time" : 0
+    }
     
-    ver_code = random.randint(1000, 9999)
-    verified = False
-    attemps = 0
-    #check if email already exsists
-    data = horses.check_user_exsists(email)
+    for index, item in enumerate(login_attemps):
+        if item["ip"] == ip_address:
+            if item["attemps"] >= 3:
+                time_now = time.time()
+                if time_now >= item["end_time"]:
+                    login_attemps.pop(index)
+                    
+                    return await render_template("login/loginForm.html")
+                else:
+                    time_left = (int(item["end_time"]) - int(time_now)) / 60
+                    flash(f"Please wait: {round(time_left)}-mins before trying again!!")
+                    return await render_template("infopage.html", bad=True)
     
-    if data is not None:
-        flash('This Email has already been registered!')
-        return render_template('form.html')
+    for items in login_attemps:
+        if ip_address == items["ip"]:
+            return await render_template("login/loginForm.html")
+    login_attemps.append(login_data)
+
+    return await render_template("login/loginForm.html")
+
     
+@app.post("/login")
+async def login_request():
+    
+    username = (await request.form)["username"]
+    password = (await request.form)["password"]
+    try:
+        ip_address = request.remote_addr
+    except Exception as error:
+        print(error)
+        ip_address = "Address Unavailable"
+    
+
+    for item in login_attemps:
+        if item["ip"] == ip_address:
+            if item["attemps"] >= 3:
+                # set a timer to restrict user access 
+                item["end_time"] = time.time() + 1200
+
+                await flash("Too many failed attempts!!!")
+                return await render_template("infopage.html", bad=True)
+    
+    if len(password) <= 7:
+        for item in login_attemps:
+            if item["ip"] == ip_address:
+                item["attemps"] += 1
+        await flash("Incorrect Password!")
+        return await render_template("login/loginForm.html") 
+    
+    user_data = mongodb.check_user_exsists(username)
+    
+    if user_data is not None:
+        hashed_password = user_data["password"]
+        result = mongodb.check_user_login(hashed_password, password) #check hashed password
     else:
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        await flash("User Details Not Found!")
+        return await render_template("login/loginForm.html")    
+    if result:
         
+        session["logged_in"] = username
+        for index, item in enumerate(login_attemps):
+            if item["ip"] == ip_address:
+                login_attemps.pop(index)
+        return await render_template("homepage.html", user=username)
+    else:
+        for item in login_attemps:
+            if item["ip"] == ip_address:
+                item["attemps"] += 1
+        print(*login_attemps)
+        await flash("Incorrect Password!")
+        return await render_template("login/loginForm.html")    
+
+
+
+#  Delete User From DB
+@app.post("/removeAccount")
+async def delete_account():
     
-    horses.register_user(firstname, lastname, email, hashed_password, mobile_number, street_address, mail_address, state, post_code, ver_code, verified, attemps)
-    session['regi'] = email
-    
-    email_confirmation_email(email, ver_code)
-    clean_up_thread = threading.Thread(target=email_verification_timeout, args=(session['regi'],))
-    clean_up_thread.daemon = True
-    clean_up_thread.start()
-    
-    return render_template('register.html', user=firstname, email=email)
+    password = await request.get_json()
 
-
-
-
-############################################
-####           Reset Password           ####
-############################################
-
-     
-@app.get('/passwordreset')
-@limiter.limit("500 per day")
-def password_reset():
-    
-    '''Password reset form. Just collects the users email'''
-    
-    return render_template('/password/form1.html')
-
-
-
-@app.post('/passwordEmail')
-@limiter.limit("300 per day")
-def check_email():
-    
-    '''Returned from the form with users email to reset the password'''
-    
-    user_name = request.form['email']
-    user_exsists = horses.check_user_exsists(user_name)
-    
-    if user_exsists is not None:
-        
-        ver_code = random.randint(10000, 99999)
-        horses.ver_code_update(user_exsists['email'], ver_code)
-        session['reset'] = user_exsists['email']
-        print(ver_code)
-        results = user_exsists['attemps']
-
-        if int(results > 2):
-            session.clear()
-            flash("To many code attemps contact ADMIN!")
-            return redirect('/')
+    try:
+        if session["logged_in"]:
+            user_data = mongodb.check_user_exsists(session["logged_in"])
+        if user_data is not None:
+            hashed_password = user_data["password"]
+            result = mongodb.check_user_login(hashed_password, password['password']) #check hashed password
         else:
-            email = threading.Thread(target=email_password_reset, args=(user_exsists['email'], ver_code))
-            email.start()
-
-            return render_template('/password/checkcode.html', email=user_exsists['email'])       
-    else:
-        flash('Inncorect email address!')
-        return render_template('/password/form1.html')
-    
-       
-    
-@app.post('/passwordCodeVerification')   
-@limiter.limit("600 per day")
-def check_code():
-    
-    user = session['reset']
-    code = request.form['code']
-    
-    user_exsists = horses.check_user_exsists(user)
-    stored_code = user_exsists['ver_code']
-    
-    if int(code) == int(stored_code):
+            await flash("User Details Not Found!")
+            return await render_template("homepage.html", user=session['logged_in'])
         
-        session['user'] = user
-        return render_template('/password/newPassword.html')
-    else:
-        response, results = horses.attempt_counter(user)
-
-        if int(results > 5):
+        if result:
+            # Delete user from DB
+            mongodb.remove_users_spots(session['logged_in']) # Delete Spots
+            mongodb.delete_user_from_db(session['logged_in'])# Delete User
             session.clear()
-            return redirect('/')
+            
+            
+            return {"AccountDeleted" : True }
+            
         else:
-            flash("Sorry that is an incorrect Code")
-            return render_template('/password/checkcode.html')
-   
+            return {"AccountDeleted" : False}    
+    except KeyError:
+        return {"AccountDeleted" : False}
     
-@app.post('/submitNewPassword')
-@limiter.limit("300 per day")
-def update_new_password():
-    
-    '''Push new password to db'''
-    
-    new_password = request.form['password'] 
-    
-    if session['user'] is not None:
-    
-        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
-        
-        horses.update_password(session['user'], hashed_password)
-        flash("Password has been updated 👍")
-        return render_template('loginState.html')
-        
-    else:
-        flash('Something Went Wrong!')
-        return redirect('/')
-    
-    
-    
-############################################
-####      Email Verification            ####
-############################################    
-    
-    
-@app.post('/emailVerification')
-@limiter.limit("3500 per day")
-def verify_email():
-    user = session['regi']
-    code = request.form['code']
-    
-    user_exsists = horses.check_user_exsists(user)
-    stored_code = user_exsists['ver_code']
+    return {"AccountDeleted" : False } 
 
-    
-    if int(code) == int(stored_code):
-        session['user'] = user
-        response = horses.update_verified(user)
 
-        flash("You have successfully been verified")
-        return redirect('/tips')
-    else:
-        response, results = horses.attempt_counter(user)
 
-        if int(results > 2):
-            horses.delete_user_registration(user)
-            session.clear()
-            flash("Too many Wrong attemps!")
-            return redirect('/logout')
+def start_timer():
+    start = time.time()
+    end = start + 20
+    print("start timer")
+    while True:
+        if time.time() >= end:
+            print("End time")
+            return True
         else:
-            flash("Sorry that is an incorrect Code")
-            return render_template('register.html')
+            time.sleep(5)
 
-     
-   
- 
-     
-if __name__ == "__main__":
+
+
+########################################################
+## Registration
+########################################################
+
+@app.get("/registrationForm")
+async def registration_form():
+    return await render_template("login/register.html")
+
+
+@app.post("/registration")
+async def registration_post():
+    
+    form_data = await request.form
+    
+    # username = (await request.form)["username"]
+    # email = (await request.form)["email"]
+    # password = (await request.form)["password"]  
+    # bot_field = (await request.form)["email-field"]
+    username = form_data['username']
+    email = form_data['email']
+    password = form_data['password']
+    bot_field = form_data.get('email-field')
+    
+    if bot_field and len(bot_field) > 0:
+        print("honey pot triggered")
+        await flash("Registration Successful, Thank you")
+        return await render_template("homepage.html")       
+    
+    
+    # Check if User already exsists
+    user = mongodb.check_user_exsists(username)
+    email_exsists = mongodb.check_user_email(email)
+    if user is not None:
+        await flash("Username Already Taken!")
+        return await render_template("login/register.html")
+    if email_exsists is not None:
+        await flash("Email Already Registered!")
+        return await render_template("login/register.html")
+    else:
+        verification_code = mongodb.create_user(username, email, password)
+        # print(f"Verification Code: {verification_code}")
+        mail_thread = threading.Thread(target=mailservice.email_confirmation, args=(email, verification_code))
+        mail_thread.start()
+        session["verification_pending"] = username
+        verification_code_timer = threading.Thread(target=mongodb.verification_timer, args=(username,))
+        verification_code_timer.start()
+        return await render_template("login/emailVerify.html", email=email, user=username)
+
+
+@app.post("/verificationcode")
+async def verify_user_email():
+    
+    username = session["verification_pending"]
+    form = await request.form
+    code = int(form["code"])
+    
+    user_data = mongodb.check_user_exsists(username)
+    
+    try:
+        user_attemps = user_data["verification_attempts"]
+    except:  # noqa: E722
+        session.clear()
+        await flash("Time to verifiy has passed!")
+        return await render_template("homepage.html", bad=True)
+    
+    if username is not None and user_attemps < 4:
+        
+        emailed_code = int(user_data["verification_code"])
+        # print(f"Emailed Code: {emailed_code}")
+        
+        if emailed_code == code:
+            
+            session.pop("verification_pending", default=None)
+            session["logged_in"] = user_data["username"]
+            verify_email = threading.Thread(target=mongodb.email_verified, args=(username,))
+            verify_email.start()
+            await flash("Code Verified!")
+            return await render_template("homepage.html", user=session["logged_in"])
+        
+        else:
+            mongodb.email_verify_attempts(username)
+            await flash("Incorrect code!")
+            return await render_template("login/emailVerify.html")
+    else:
+        
+        session.clear()
+        await flash("You Have Entered Code Wrong Too Many Times!!")
+        return await render_template("homepage.html", bad=True)
+
+
+########################################################
+## Password Reset
+########################################################
+
+@app.get("/resetpassword")
+async def reset_password():
+    return await render_template("passwordreset/resetform.html")
+
+
+
+@app.post("/passwordresetemail")
+async def reset_password_post():
+    username = (await request.form)["username"]
+    email = (await request.form)["email"]
+    
+    user_data = mongodb.check_user_exsists(username)
+    
+    if user_data is not None:
+        saved_email = user_data["email"]
+        if email != saved_email:
+            await flash("Sorry incorrect details!")
+            return await render_template("infopage.html", bad=True)
+        else:
+            # Set new verification code in DB
+            verification_code = mongodb.password_reset_verification_code(username)
+            send_email = threading.Thread(target=mailservice.email_password_reset, args=(saved_email, verification_code))
+            send_email.start()
+            # print(verification_code)
+            session["email_reset"] = username
+            return await render_template("passwordreset/passwordresetcode.html", user=username, email=saved_email)
+    
+    return await render_template("passwordreset/resetform.html")
+
+
+@app.post("/passwordresetcode")
+async def verify_password_code():
+
+    user_code = (await request.form)["code"]
+    try:
+        username = session["email_reset"]
+    except KeyError:
+        return redirect("/")
+
+    user_data = mongodb.check_user_exsists(username)
+    
+    try:
+        user_attemps = user_data["verification_attempts"]
+        end_time = user_data["end_timer"]
+    except Exception as error:
+        print(error)
+        session.clear()
+        await flash("Error in password reset!")
+        return await render_template("infopage.html", bad=True)
+    
+    if username is not None and user_attemps < 4 and time.time() < end_time:
+        
+        emailed_code = int(user_data["verification_code"])
+        # print(f"Emailed Code: {emailed_code}")
+    
+        if int(emailed_code) == int(user_code):
+            
+            reset_counters = threading.Thread(target=mongodb.password_code_verified, args=(username,))
+            reset_counters.start()    
+            # New Password
+            await flash("Code Verified!")
+            return await render_template("passwordreset/newpassword.html")
+            
+        else:
+                   
+            mongodb.email_verify_attempts(username)
+            await flash("Incorrect code!")
+            return await render_template("passwordreset/passwordresetcode.html")
+    else:
+        
+        session.clear()
+        if time.time() > end_time:
+            await flash("Reset has timed out!!")
+        else:
+            await flash("You Have Entered Code Wrong Too Many Times!!")
+        return await render_template("homepage.html", bad=True)
+
+
+@app.post("/updatepassword")
+async def store_new_password():
+    
+    try:
+        username = session["email_reset"]
+    except Exception as error:
+        print(error)
+        return await redirect("/")
+
+    unhased_password = (await request.form)["password"]
+    
+    
+    store_new_password = threading.Thread(target=mongodb.update_new_password, args=(username, unhased_password))
+    store_new_password.start()
+    session.clear()
+    session["logged_in"] = username
+    await flash("Password Reset and logged in!")
+    return await render_template("homepage.html", user=session["logged_in"])
+    
+    
+    
+
+########################################################
+## Start app
+########################################################
+
+
+
+
+if __name__ == '__main__':
     app.run()

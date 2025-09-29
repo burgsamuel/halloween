@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/128/8745/8745230.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Halloween Spotter</title>
+  <link rel="stylesheet" href="{{ url_for('static',filename='styles/home.css') }}" />
+</head>
+
+<body>
+  <header>
+
+    <h1>🎃 Halloween 🍬 <br />Trick and Treat Spotter</h1>
+  </header>
+  {% if bad %}
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+  {% for message in messages %}
+  <p
+    style="max-width: 350px; background-color: rgba(235, 98, 35, 0.959); color: aliceblue; border-radius: 3px; padding: 10px; margin-left: 10px;">
+    {{ message }}</p>
+  {% endfor %}
+
+  {% endif %}
+  {% endwith %}
+
+  {% else %}
+
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+  {% for message in messages %}
+  <p
+    style="max-width: 350px; background-color: rgba(105, 235, 35, 0.894); color: rgb(0, 0, 0); border-radius: 3px; padding: 10px; margin-left: 10px;">
+    {{ message }}</p>
+  {% endfor %}
+
+  {% endif %}
+  {% endwith %}
+  {% endif %}
+
+  <div id="nav-button-div">
+    <a href="/mapView"><button>View the Map</button></a>
+  </div>
+  {% if user %}
+
+  <div id="login-button">
+
+    <p id="instructions-p">
+      Welcome {{user.title()}}.<br> You can now add your own spots by clicking on the 'Add Location' button below 👇.
+    </p>
+
+    <a href="/location"><button>Add Location</button></a>
+    <a href="/logout"><button>Logout</button></a>
+
+
+    {% else %}
+    <div id="login-button">
+      <a href="/loginForm"><button>Login</button></a>
+      <a href="/registrationForm"><button>Register</button></a>
+    </div>
+    <div id="intro-text">
+      <p>
+If you are new here, this website allows you to look at a map of places that are participating in Halloween. The idea is to help you plan your trick-or-treating route. 
+<br><br>
+Over the years, I've found myself looking down many streets that do not have anyone participating, so why not help find the places?
+<br><br>
+To start, all you need is an email address. When you register, you'll receive a verification code. (I'm a big believer in NOT sharing email addresses or personal information, including any GPS data.)
+Once registered, you can follow the links to add a location, or "spot." 
+<br><br>
+The app will ask for your location to zoom in close to where you are. If your location is not correct, you can click on the map to mark a precise location. (If you have any location concerns, please just mark on the road in front of your place.)
+All you need to do is choose an icon or leave it as is, then click the save button.
+<br><br>
+I have a time limit for adding spots so users can't spam the server. Please feel free to spot other locations that you find throughout the evening of Halloween.
+There is an option to delete all your added spots if you choose to. On the home page, you will also find an option to delete your user account.
+<br>
+<br>
+This is a hobby app that I have coded in my spare time. I am covering all server, database, and domain costs myself. As stated before, no information is being shared, and all sensitive data is fully encrypted/hashed.
+<br>
+<br>
+If you need to contact me, please send an email to admin@halloweenspotter.com. I may be open to adding features or ideas in the future, and possibly sponsorship to help cover costs.
+      </p>
+    </div>
+    {% endif %}
+
+    {% if user %}
+    <div id="removeAccount">
+      <button id="deleteUserButton" onclick="deleteUser()">Delete Account</button>
+    </div>
+{% endif %}
+
+<script src="{{ url_for('static',filename='script/homepage.js') }}"></script>
+</body>
+
+</html>

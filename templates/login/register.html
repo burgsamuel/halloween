@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/128/8745/8745230.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Form</title>
+  <link rel="stylesheet" href="{{ url_for('static',filename='styles/registrationForm.css') }}" />
+</head>
+
+<body>
+
+  <header>
+    <a href="/"><button>Home</button></a>
+    <a href="/loginForm"><button>Login</button></a>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <p
+      style="max-width: 350px; background-color: rgba(235, 98, 35, 0.959); color: aliceblue; border-radius: 3px; padding: 10px; margin-left: 10px;">
+      {{ message }}</p>
+    {% endfor %}
+
+    {% endif %}
+    {% endwith %}
+
+  </header>
+  <form action="/registration" method="post" id="registrationform">
+    <h1>🎃 Register 🍬</h1>
+    <div id="usernamefield">
+      <label for="username">User Name</label><br>
+      <input type="text" name="username" id="username" required maxlength="100">
+    </div>
+    <div style="display: none;" aria-hidden="true">
+      <label for="email-field">Please Leave this field</label>
+      <input type="email" name="email-field" id="email-field" tabindex="-1" autocomplete="off">
+    </div>
+    <div id="emailfield">
+      <label for="email">Email</label><br>
+      <input type="email" name="email" id="email" required maxlength="100">
+    </div>
+    <div>
+      <div class="password-animations">
+        <span id="password-span"></span>
+      </div>
+      <div id="passwordfield">
+        <label for="password">Password</label><br>
+        <input type="password" name="password" id="password" required maxlength="100" minlength="8">
+      </div>
+      <div class="password-animations">
+        <span id="retype-password-span"></span>
+      </div>
+      <div id="passwordcheckfield">
+        <label for="passwordcheck">Retype Password</label><br>
+        <input type="password" name="passwordcheck" id="passwordcheck" required maxlength="100" minlength="8">
+      </div>
+
+    </div>
+    <div id="form-button-div">
+      <button type="submit" id="submitbutton">Register</button>
+    </div>
+  </form>
+
+
+</body>
+<script>
+  const submitButton = document.getElementById("submitbutton");
+
+  function onSubmitClick(){
+    submitButton.innerText = "Loading!"
+  };
+  submitButton.addEventListener("click", onSubmitClick);
+
+  const passwordBox = document.getElementById('password')
+  const passwordcheck = document.getElementById('passwordcheck')
+  const retypeSpan = document.getElementById('retype-password-span')
+  const passwordSpan = document.getElementById('password-span')
+
+  function checkPassword() {
+    const firstValue = passwordBox.value;
+    const secondValue = passwordcheck.value;
+    if (firstValue === secondValue) {
+      if (firstValue.length == 0) {
+        retypeSpan.innerText = '';
+      }
+      else {
+        retypeSpan.innerText = '👍✅';
+      }
+    }
+    else {
+      retypeSpan.innerText = '👎 Not Matching Yet';
+    }
+
+    if (firstValue.length < 8 && firstValue.length > 0) {
+      passwordSpan.innerText = ' Too Short min - 8';
+    }
+    else {
+      if (firstValue.length > 7) {
+        passwordSpan.innerText = '👍✅';
+      }
+
+    }
+
+  }
+
+  setInterval(() => {
+    checkPassword()
+  }, 500)
+</script>
+
+</html>
