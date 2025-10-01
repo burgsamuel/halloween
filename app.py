@@ -57,6 +57,10 @@ def email_verification_timeout(user):
 ####            Home Page               ####
 ############################################
 
+@app.get('/healthz')
+def health_check():
+    return "OK", 200
+
 
 
 @app.get("/") 
