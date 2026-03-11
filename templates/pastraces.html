@@ -7,10 +7,8 @@ Past Results
 {% block content %}
 
 <!-- Loading Overlay -->
-<!-- Loading Overlay -->
 <div id="loading-overlay">
     <div class="loading-content">
-        <div class="horse-runner"></div>
         <div id="loading-percent">0%</div>
         <div class="loader-bar"></div>
     </div>
@@ -33,7 +31,20 @@ Past Results
         transition: opacity 0.4s ease;
     }
 
-    /* Progress bar container */
+    .loading-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+    }
+
+    #loading-percent {
+        font-size: 1.4em;
+        font-weight: bold;
+        color: white;
+        letter-spacing: 1px;
+    }
+
     .loader-bar {
         width: 60%;
         height: 6px;
@@ -43,7 +54,6 @@ Past Results
         position: relative;
     }
 
-    /* Animated bar */
     .loader-bar::after {
         content: "";
         position: absolute;
@@ -56,7 +66,6 @@ Past Results
         border-radius: 4px;
     }
 
-    /* Animation */
     @keyframes loadingSlide {
         0% { left: -40%; }
         50% { left: 60%; }
@@ -83,7 +92,6 @@ Past Results
         transition: all 0.3s ease;
     }
 
-    /* When expanded: transparent + white border */
     .track-card.opened {
         background: transparent !important;
         border: 1px solid rgba(255, 255, 255, 0.96);
@@ -124,13 +132,11 @@ Past Results
         display: block;
     }
 
-    /* Fade-in animation */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(-4px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- RESULT ROW LAYOUT (TILES STAY SOLID) --- */
     .result-row {
         padding: 10px;
         border-radius: 5px;
@@ -142,7 +148,6 @@ Past Results
         transition: box-shadow 0.3s ease;
     }
 
-    /* Subtle glow for winners (unchanged tiles) */
     .first {
         background-color: rgba(248, 245, 39, 0.95);
         box-shadow: 0 0 8px rgba(248, 245, 39, 0.6);
@@ -158,7 +163,6 @@ Past Results
         box-shadow: 0 0 8px rgba(24, 215, 167, 0.6);
     }
 
-    /* Default background for non‑winners (4th and worse) */
     .result-row:not(.first):not(.second):not(.third) {
         background-color: rgba(255, 255, 255, 0.92);
         box-shadow: 0 0 6px rgba(0,0,0,0.4);
@@ -211,101 +215,19 @@ Past Results
         margin-top: 2px;
         white-space: nowrap;
     }
-
-    /* Fullscreen loading overlay */
-#loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(10, 10, 10, 0.85);
-    backdrop-filter: blur(4px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    transition: opacity 0.4s ease;
-}
-
-.loading-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 18px;
-}
-
-/* Percentage text */
-#loading-percent {
-    font-size: 1.4em;
-    font-weight: bold;
-    color: white;
-    letter-spacing: 1px;
-}
-
-/* Running horse silhouette */
-.horse-runner {
-    width: 90px;
-    height: 60px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    animation: horseRun 0.8s steps(6) infinite;
-    filter: drop-shadow(0 0 6px rgba(255,255,255,0.4));
-}
-
-/* Horse sprite animation (CSS-only silhouette) */
-@keyframes horseRun {
-    0% { background-image: url('https://i.imgur.com/4ZQZ4yC.png'); }
-    20% { background-image: url('https://i.imgur.com/0z0z0z0.png'); }
-    40% { background-image: url('https://i.imgur.com/4ZQZ4yC.png'); }
-    60% { background-image: url('https://i.imgur.com/0z0z0z0.png'); }
-    80% { background-image: url('https://i.imgur.com/4ZQZ4yC.png'); }
-    100% { background-image: url('https://i.imgur.com/0z0z0z0.png'); }
-}
-
-/* Progress bar container */
-.loader-bar {
-    width: 60%;
-    height: 6px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
-}
-
-    /* Animated bar */
-    .loader-bar::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -40%;
-        width: 40%;
-        height: 100%;
-        background: linear-gradient(90deg, #00ff9d, #00c8ff);
-        animation: loadingSlide 1.2s infinite ease-in-out;
-        border-radius: 4px;
-    }
-
-    @keyframes loadingSlide {
-        0% { left: -40%; }
-        50% { left: 60%; }
-        100% { left: 100%; }
-    }
 </style>
 
 <script>
-    // Percentage counter
+    /* Loading percentage animation */
     let percent = 0;
     const percentText = document.getElementById("loading-percent");
 
     const interval = setInterval(() => {
-        percent += Math.floor(Math.random() * 8) + 3; // random smooth increments
+        percent += Math.floor(Math.random() * 8) + 3;
         if (percent > 100) percent = 100;
         percentText.textContent = percent + "%";
     }, 120);
 
-    // Hide loading overlay when page is ready
     window.addEventListener("load", function () {
         clearInterval(interval);
         percentText.textContent = "100%";
@@ -317,8 +239,31 @@ Past Results
             overlay.style.display = "none";
         }, 400);
     });
-</script>
 
+    /* Expand/collapse track cards */
+    document.addEventListener("DOMContentLoaded", () => {
+        const cards = document.querySelectorAll(".track-card");
+
+        cards.forEach(card => {
+            const header = card.querySelector(".track-header");
+            const body = card.querySelector(".track-body");
+
+            header.addEventListener("click", () => {
+                const isOpen = card.classList.contains("opened");
+
+                if (isOpen) {
+                    card.classList.remove("opened");
+                    card.classList.add("collapsed");
+                    body.classList.remove("open");
+                } else {
+                    card.classList.add("opened");
+                    card.classList.remove("collapsed");
+                    body.classList.add("open");
+                }
+            });
+        });
+    });
+</script>
 
 <a href="/"><button type="button" class="btn btn-secondary back-btn">Home</button></a>
 
