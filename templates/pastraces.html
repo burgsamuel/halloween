@@ -1,127 +1,387 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Past Results
+Past Results
 {% endblock %}
 
 {% block content %}
 
-
-<a href="/"><button type="button" style="margin-left: 10px;  width: 125px;" class="btn btn-secondary">Home</button></a>
-
-
-<div style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 750px; justify-content: center; align-items: center;">
-
-      {% set cursor_list = data | list %}
-      {% set length = cursor_list | length %}
-      
-  {% if length < 1 %}
-  <div class="row text-white" style="width: 100vw;">
-    <div class="col-12 text-center">
-      Coming Soon 🏇
+<!-- Loading Overlay -->
+<!-- Loading Overlay -->
+<div id="loading-overlay">
+    <div class="loading-content">
+        <div class="horse-runner"></div>
+        <div id="loading-percent">0%</div>
+        <div class="loader-bar"></div>
     </div>
-  </div>
-
-  {% else %}
-
-   <div class="row text-white" style="width: 100vw;">
-    <div class="col-12 text-center">
-
-      Total Past Tips 👉 {{ length }}
-    </div>
-  </div>
-
-    {% for i in cursor_list %} <!-- Loop over the data -->
-    
-
-    
-    <div class="row-flex" style="box-shadow: 3px 3px 5px rgba(5, 5, 5, 0.826); margin: 7px 5px; background-color: rgb(234, 233, 233); padding-top: 5px; padding-left: 15px;padding-right: 20px; border-radius: 10px; min-width: 340px; max-width: 450px;">
-      <div class="row">
-        <div class="col-9 text-start">
-            <strong style="padding: 0; font-size: 1em">{{i['race']}} </strong>
-        </div>
-        <!-- <div class="col-3 text-end" style="padding: 0; font-size:.9em;">{{i['stringTime']}}</div>   -->
-      </div>
-      <div class="row">
-    
-        {% if i['raceDetails'] %}
-        <div class="col-7 text-start" style="font-size: .8em; padding: 5px; font-weight: 600;"> {{i['raceDetails']['horseNumber']}}. {{i['horse']}} {{i['raceDetails']['gateNumber']}} </div>
-        <div class="col-5 text-end" style="font-size: .7em; padding: 0;">Win: ${{i['raceDetails']['winPrice']}}  Place: ${{i['raceDetails']['placePrice']}} </div>
-        {% else %}
-        <div class="col-7 text-start" style="font-size: .8em; padding: 5px; font-weight: 600;">🏇 {{i['horse']}} </div>
-        <div class="col-5 text-end" style="font-size: .7em; padding: 0;">Win: $ -  Place: $ - </div>
-        {% endif %}
-        
-      </div>
-
-      {% if i['raceDetails']%}
-      <div class="row text-center" style="opacity: .8;">
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['raceDetails']['lastFinishes']}}</div>
-        {% if i['conditions'] %}
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['condition']}}</div>
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['weather']}}</div>
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['temp']}}°C</div>
-        {% endif %}
-      </div>
-      {% endif %}
-    
-    
-      <div class="row" >
-        <div class="col-7 text-start" style="padding-top: 5px; padding-right: 0; padding-left: 7px; font-size:.8em;">J: {{i['jockeyName']}}</div>
-      </div>
-    
-      {% if i['bibLink'] == '' %}
-        <div class="row">
-          <div class="col-9 text-start" style="padding-right: 0; padding-left: 7px; font-size:.75em;">T: {{i['trainerName']}}</div>
-          <div class="col-1" style="padding-bottom: 6px;"><p style="width: 20px; margin: 0;">👕</p></div>
-          <div class="col-2 text-end" style="font-size: .7em; padding: 0;">Score: {{i['score']}}</div>
-        </div>        
-      {% else %}
-        <div class="row">
-          <div class="col-9 text-start" style="padding-right: 0; padding-left: 7px; font-size:.75em;">T: {{i['trainerName']}}</div>
-          <div class="col-1" style="padding-bottom: 6px;"><img src="{{i['bibLink'] }}" alt="👕" style="width: 20px; margin: 0;"></div>
-          <div class="col-2 text-end" style="font-size: .7em; padding: 0;">Score: {{i['score']}}</div>
-        </div>
-        {% endif %}
-
-        {% if i['finishPosition'] %}
-
-            {% if i['finishPosition'] == '1' %}
-            <div class="row-flex align-items-center">
-                <div class="col text-center" style="background-color: rgba(215, 212, 24, 0.868); border-radius: 5px;">Position: {{i['finishPosition']}} </div>
-            </div>
-            {% elif i['finishPosition'] == '2' %}
-            <div class="row-flex align-items-center">
-                <div class="col text-center" style="background-color: rgba(65, 215, 24, 0.505);  border-radius: 5px;">Position: {{i['finishPosition']}} </div>
-            </div>
-            {% elif i['finishPosition'] == '3' %}
-            <div class="row-flex align-items-center">
-                <div class="col text-center" style="background-color: rgba(24, 215, 167, 0.868);  border-radius: 5px;">Position: {{i['finishPosition']}} </div>
-            </div>
-            {% else %}
-            <div class="row-flex align-items-center">
-                <div class="col text-center">Position: {{i['finishPosition']}} </div>
-            </div>
-            {% endif %}
-
-        {% else %}
-        <div class="row-flex align-items-center">
-            <div class="col text-center">Position: - </div>
-        </div>
-
-    {% endif %}
-    </div>
-
-
-
-    
-    
- {% endfor %}
-
-{% endif %}
-
 </div>
 
+<style>
+    /* Fullscreen loading overlay */
+    #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(10, 10, 10, 0.85);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.4s ease;
+    }
 
+    /* Progress bar container */
+    .loader-bar {
+        width: 60%;
+        height: 6px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Animated bar */
+    .loader-bar::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -40%;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(90deg, #00ff9d, #00c8ff);
+        animation: loadingSlide 1.2s infinite ease-in-out;
+        border-radius: 4px;
+    }
+
+    /* Animation */
+    @keyframes loadingSlide {
+        0% { left: -40%; }
+        50% { left: 60%; }
+        100% { left: 100%; }
+    }
+
+    .results-container {
+        max-width: 750px;
+        margin: 20px auto;
+        padding: 10px;
+    }
+
+    .back-btn {
+        margin: 10px;
+        width: 125px;
+    }
+
+    .track-card {
+        background: #f2f2f2;
+        margin: 10px 0;
+        border-radius: 10px;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.96);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    /* When expanded: transparent + white border */
+    .track-card.opened {
+        background: transparent !important;
+        border: 1px solid rgba(255, 255, 255, 0.96);
+        box-shadow: none;
+    }
+
+    .track-header {
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: bold;
+        font-size: 1.1em;
+        background: rgba(230, 230, 230, 0.97);
+        cursor: pointer;
+        user-select: none;
+        backdrop-filter: blur(2px);
+    }
+
+    .toggle-icon {
+        font-size: 1.3em;
+        color: green;
+        transition: transform 0.2s ease;
+    }
+
+    .collapsed .toggle-icon {
+        transform: rotate(-90deg);
+    }
+
+    .track-body {
+        display: none;
+        padding: 12px 15px;
+        background: transparent !important;
+        animation: fadeIn 0.35s ease;
+    }
+
+    .track-body.open {
+        display: block;
+    }
+
+    /* Fade-in animation */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- RESULT ROW LAYOUT (TILES STAY SOLID) --- */
+    .result-row {
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 8px;
+        font-size: 0.95em;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: box-shadow 0.3s ease;
+    }
+
+    /* Subtle glow for winners (unchanged tiles) */
+    .first {
+        background-color: rgba(248, 245, 39, 0.95);
+        box-shadow: 0 0 8px rgba(248, 245, 39, 0.6);
+    }
+
+    .second {
+        background-color: rgba(65, 215, 24, 0.94);
+        box-shadow: 0 0 8px rgba(65, 215, 24, 0.6);
+    }
+
+    .third {
+        background-color: rgba(24, 215, 167, 0.98);
+        box-shadow: 0 0 8px rgba(24, 215, 167, 0.6);
+    }
+
+    /* Default background for non‑winners (4th and worse) */
+    .result-row:not(.first):not(.second):not(.third) {
+        background-color: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 0 6px rgba(0,0,0,0.4);
+    }
+
+    .result-left {
+        font-weight: bold;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .horse-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .jockey-label,
+    .trainer-label {
+        font-weight: normal;
+        font-size: 0.85em;
+        opacity: 0.85;
+    }
+
+    .result-right {
+        min-width: 80px;
+        text-align: right;
+        font-weight: 600;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .price-badge {
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        font-weight: 600;
+        white-space: nowrap;
+        text-align: right;
+        border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    .date-label {
+        font-size: 0.8em;
+        opacity: 0.7;
+        margin-top: 2px;
+        white-space: nowrap;
+    }
+
+    /* Fullscreen loading overlay */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.4s ease;
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+}
+
+/* Percentage text */
+#loading-percent {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: white;
+    letter-spacing: 1px;
+}
+
+/* Running horse silhouette */
+.horse-runner {
+    width: 90px;
+    height: 60px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    animation: horseRun 0.8s steps(6) infinite;
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.4));
+}
+
+/* Horse sprite animation (CSS-only silhouette) */
+@keyframes horseRun {
+    0% { background-image: url('https://i.imgur.com/4ZQZ4yC.png'); }
+    20% { background-image: url('https://i.imgur.com/0z0z0z0.png'); }
+    40% { background-image: url('https://i.imgur.com/4ZQZ4yC.png'); }
+    60% { background-image: url('https://i.imgur.com/0z0z0z0.png'); }
+    80% { background-image: url('https://i.imgur.com/4ZQZ4yC.png'); }
+    100% { background-image: url('https://i.imgur.com/0z0z0z0.png'); }
+}
+
+/* Progress bar container */
+.loader-bar {
+    width: 60%;
+    height: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+    /* Animated bar */
+    .loader-bar::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -40%;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(90deg, #00ff9d, #00c8ff);
+        animation: loadingSlide 1.2s infinite ease-in-out;
+        border-radius: 4px;
+    }
+
+    @keyframes loadingSlide {
+        0% { left: -40%; }
+        50% { left: 60%; }
+        100% { left: 100%; }
+    }
+</style>
+
+<script>
+    // Percentage counter
+    let percent = 0;
+    const percentText = document.getElementById("loading-percent");
+
+    const interval = setInterval(() => {
+        percent += Math.floor(Math.random() * 8) + 3; // random smooth increments
+        if (percent > 100) percent = 100;
+        percentText.textContent = percent + "%";
+    }, 120);
+
+    // Hide loading overlay when page is ready
+    window.addEventListener("load", function () {
+        clearInterval(interval);
+        percentText.textContent = "100%";
+
+        const overlay = document.getElementById("loading-overlay");
+        overlay.style.opacity = "0";
+
+        setTimeout(() => {
+            overlay.style.display = "none";
+        }, 400);
+    });
+</script>
+
+
+<a href="/"><button type="button" class="btn btn-secondary back-btn">Home</button></a>
+
+<div class="results-container">
+
+    {% if tracks|length == 0 %}
+        <div class="empty">No past results yet 🏇</div>
+    {% endif %}
+
+    {% for track_name, track in tracks|dictsort %}
+        <div class="track-card collapsed">
+
+            <div class="track-header">
+                <span>{{ track_name }}</span>
+                <span class="toggle-icon">▶</span>
+            </div>
+
+            <div class="track-body">
+
+                {% for h in track.horses %}
+                    {% set cls = "" %}
+                    {% if h.position == 1 %}
+                        {% set cls = "first" %}
+                    {% elif h.position == 2 %}
+                        {% set cls = "second" %}
+                    {% elif h.position == 3 %}
+                        {% set cls = "third" %}
+                    {% endif %}
+
+                    <div class="result-row {{ cls }}">
+                        <div class="result-left">
+
+                            <div class="horse-line">
+                                {% if h.silk %}
+                                    <img src="{{ h.silk }}" alt="silk"
+                                         style="width:28px; height:28px; border-radius:4px;">
+                                {% endif %}
+                                {{ h.horse }}
+                            </div>
+
+                            <div class="jockey-label">J: {{ h.jockey }}</div>
+                            <div class="trainer-label">T: {{ h.trainer }}</div>
+                            <div class="date-label">{{ h.date }}</div>
+                        </div>
+
+                        <div class="result-right">
+
+                            {% if h.position == 1 and h.openPrice %}
+                                <span class="price-badge">Win: ${{ h.openPrice }}</span>
+                            {% elif h.position in [2,3] and h.placePrice %}
+                                <span class="price-badge">Place: ${{ h.placePrice }}</span>
+                            {% endif %}
+
+                            <span>Position - {{ h.position }}</span>
+                        </div>
+                    </div>
+
+                {% endfor %}
+
+            </div>
+        </div>
+    {% endfor %}
+
+</div>
 
 {% endblock %}

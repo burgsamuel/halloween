@@ -7,10 +7,14 @@ from flask_session import Session
 from flask_bcrypt import Bcrypt 
 from mongo_db import HorseMongo
 from datetime import timedelta
+from datetime import datetime
 import threading
 import random
 import time
 import os
+
+from collections import defaultdict
+
 
 
 horses = HorseMongo()  # DB Instance
@@ -111,31 +115,139 @@ def api_data():
     else:
         return jsonify({"User": "Invalid"})
    
-   
+
+
+def group_by_track(raw_data):
+    tracks = defaultdict(lambda: {"horses": []})
+
+    for entry in raw_data:
+        race_name = entry.get("race")
+        if not race_name:
+            continue
+
+        # Extract track name (everything before " Race")
+        track = race_name.split(" Race")[0]
+
+        # Horse name
+        horse = entry.get("horse") or entry.get("raceDetails", {}).get("horseName")
+
+        # Position
+        pos = entry.get("finishPosition", "").strip()
+        if not pos.isdigit():
+            continue
+        pos = int(pos)
+
+        # Jockey
+        jockey = (
+            entry.get("jockeyName")
+            or entry.get("raceDetails", {}).get("jockeyName")
+            or "Unknown"
+        )
+        if isinstance(jockey, str) and jockey.startswith("J: "):
+            jockey = jockey.replace("J: ", "").strip()
+
+        # Trainer
+        trainer = (
+            entry.get("trainerName")
+            or entry.get("raceDetails", {}).get("trainerName")
+            or "Unknown"
+        )
+        if isinstance(trainer, str) and trainer.startswith("T: "):
+            trainer = trainer.replace("T: ", "").strip()
+
+        # Silk image
+        silk = entry.get("bibLink")
+        if silk:
+            if silk.startswith("//"):
+                silk = "https:" + silk
+        else:
+            silk = None
+
+        # Date from timestamp
+        ts = entry.get("timeStored")
+        if ts:
+            date_str = datetime.fromtimestamp(ts).strftime("%d %b %Y")
+        else:
+            date_str = "Unknown"
+
+        tracks[track]["horses"].append({
+            "horse": horse,
+            "position": pos,
+            "date": date_str,
+            "timestamp": ts or 0,
+            "jockey": jockey,
+            "trainer": trainer,
+            "silk": silk,
+            "openPrice": entry.get("raceDetails", {}).get("openPrice"),
+            "placePrice": entry.get("raceDetails", {}).get("placePrice")
+
+        })
+
+    # Sort horses: 1st → 2nd → 3rd → etc, newest first within each position
+    for track in tracks.values():
+        track["horses"].sort(key=lambda x: (x["position"], -x["timestamp"]))
+
+    return tracks
+
+
+
+
     
+
 @app.get('/pastresults')
-@limiter.limit("8000 per hour") 
+@limiter.limit("8000 per hour")
 def past_results():
-    
     try:
-        if session['user'] is not None:
+        if session.get('user') is not None:
             user = horses.check_user_exsists(session['user'])
+
             if user['verified']:
-                data = horses.retrive_mongo_past_results()
-                return render_template('pastraces.html', pastResults=True, data=data, timenow=int(time.time()), user=session['user'])  
+
+                raw_data = horses.retrive_mongo_past_results()
+
+                # NEW grouping
+                grouped = group_by_track(raw_data)
+
+                return render_template(
+                    'pastraces.html',
+                    pastResults=True,
+                    tracks=grouped,
+                    timenow=int(time.time()),
+                    user=session['user']
+                )
+
             else:
                 flash("Email not Verified!!")
-                return redirect('/login')    
+                return redirect('/login')
+
         else:
             flash("Please Login/Register! ")
             return redirect('/login')
+
     except KeyError:
         flash("Please Login/Register! ")
-        return redirect('/login')    
+        return redirect('/login')
+   
     
+# @app.get('/pastresults')
+# @limiter.limit("8000 per hour") 
+# def past_results():
     
-    
-    
+#     try:
+#         if session['user'] is not None:
+#             user = horses.check_user_exsists(session['user'])
+#             if user['verified']:
+#                 data = horses.retrive_mongo_past_results()
+#                 return render_template('pastraces.html', pastResults=True, data=data, timenow=int(time.time()), user=session['user'])  
+#             else:
+#                 flash("Email not Verified!!")
+#                 return redirect('/login')    
+#         else:
+#             flash("Please Login/Register! ")
+#             return redirect('/login')
+#     except KeyError:
+#         flash("Please Login/Register! ")
+#         return redirect('/login')   
     
 ############################################
 ####        Tips and Results Page       ####
