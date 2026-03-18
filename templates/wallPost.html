@@ -1,74 +1,134 @@
-{% extends 'base.html' %} {% block title %}Posts{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Member Posts{% endblock %}
 
 {% block content %}
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-  {% for message in messages %}
-    <p style=" margin-left: 10px; max-width: 350px; border: 1px solid tomato; background-color: rgba(255, 99, 71, 0.473); color: aliceblue; border-radius: 3px; padding: 10px;" >{{ message }}</p>
-  {% endfor %}
-{% endif %}
-{% endwith %}
- 
-<h5 class="text-white" style="font-size: 1rem; margin-left: 10px;">Posting as 👇</h4>
-<form action="/submitPost" method="post">
-<div class="form-group ">
-    <input type="text" class="form-control" id="user-name" name="username"  placeholder="{{user}}" style="max-width: 350px; margin: 10px;" readonly>
-</div>
-<div class="form-group">
-<textarea class="form-control" id="post-text-area" name="postText" maxlength="1000" placeholder="Your Post" style="max-width: 350px; margin: 10px;" required></textarea>
-</div>
-<button type="submit" class="btn btn-secondary" value="Login" style="margin: 10px; width: 125px;" id="submit-button" onclick="loadingStatus()">
-  Post
-</button>
-</form>
 
-<hr class="hr">
+<div class="container-fluid px-3" style="max-width: 760px;">
 
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-danger mt-3">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
-{% for i in data %}
-<div class="row bg-light text-center" id="{{i['_id']}}" style="margin: 10px; border-radius: 10px;">
-  <div class="text-start" style="margin-top: 5px;">
-    <p style="font-weight: 600;">{{i['format_time']}} <br><span style="font-weight: 400; font-size: .8rem;">{{i['user']}}</span></p>
-    <hr class="hr">
-    <p class="" style="font-weight: 600;">{{i['post']}}</p>
+  <!-- POST COMPOSER -->
+  <div class="card mt-4 mb-4 text-white"
+       style="
+         background: rgba(0,0,0,0.55);
+         backdrop-filter: blur(12px);
+         border-radius: 18px;
+         border: 1px solid rgba(255,255,255,0.15);
+       ">
+    <div class="card-body">
+
+      <div style="font-size:.8rem; opacity:.75;">
+        Posting as
+      </div>
+
+      <input type="text"
+             class="form-control mb-3"
+             value="{{ user }}"
+             readonly
+             style="background: rgba(255,255,255,0.08); color: white; border: none;">
+
+      <form action="/submitPost" method="post">
+        <textarea class="form-control mb-3"
+                  id="post-text-area"
+                  name="postText"
+                  rows="3"
+                  maxlength="1000"
+                  placeholder="Share something with the community…"
+                  required
+                  style="background: rgba(255,255,255,0.08); color: white; border: none;"></textarea>
+
+        <button type="submit"
+                class="btn btn-secondary w-100"
+                id="submit-button"
+                onclick="loadingStatus()">
+          Post
+        </button>
+      </form>
+
+    </div>
   </div>
-  <hr class="hr">
-  {% if user == i['user'] %}
-  <form action="/removePost" method="post" onsubmit="return confirm('Are you sure you want to remove this post? You cannot undo!')">
-    <button type="submit" name="id_of_post" value="{{i['_id']}}" class="btn btn-danger btn-sm" style="width: 80px;" >Delete</button>
-    <button type="submit" name="like-button" value="{{i['_id']}}" class="btn btn-secondary disabled btn-sm" style="width: 80px;" aria-disabled="true" >like👍</button>
-  </form>
 
-  {% else %}
-  <form action="/addlike" method="post" onsubmit="return confirm('Just confirming you are liking this post?')">
-    <button type="submit" name="like-button" value="{{i['_id']}}" class="btn btn-secondary btn-sm" style="width: 80px;" >like👍</button>
-  </form>
+  <!-- POSTS FEED -->
+  {% for i in data %}
+  <div class="card mb-3 text-white"
+       id="{{ i['_id'] }}"
+       style="
+         background: rgba(0,0,0,0.55);
+         backdrop-filter: blur(12px);
+         border-radius: 18px;
+         border: 1px solid rgba(255,255,255,0.12);
+       ">
 
-  
-  {% endif%}
-  <span>Likes {{i['likes']}}</span>
+    <!-- Header -->
+    <div class="card-body pb-2">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div style="font-weight:600;">{{ i['user'] }}</div>
+          <div style="font-size:.75rem; opacity:.7;">
+            {{ i['format_time'] }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="card-body pt-0">
+      <p style="font-size:1rem; margin-bottom:0; line-height:1.4;">
+        {{ i['post'] }}
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="card-footer bg-transparent border-0
+                d-flex justify-content-between align-items-center">
+
+      <span style="font-size:.8rem; opacity:.75;">
+        👍 {{ i['likes'] }}
+      </span>
+
+      {% if user == i['user'] %}
+        <form action="/removePost" method="post"
+              onsubmit="return confirm('Delete this post?')">
+          <button class="btn btn-outline-danger btn-sm"
+                  name="id_of_post"
+                  value="{{ i['_id'] }}">
+            Delete
+          </button>
+        </form>
+      {% else %}
+        <form action="/addlike" method="post">
+          <button class="btn btn-outline-light btn-sm"
+                  name="like-button"
+                  value="{{ i['_id'] }}">
+            Like 👍
+          </button>
+        </form>
+      {% endif %}
+
+    </div>
+
+  </div>
+  {% endfor %}
+
 </div>
-
-{% endfor %}
-
 
 <script>
+const codeForm = document.getElementById('post-text-area');
+const buttonSubmit = document.getElementById('submit-button');
 
-  const codeForm = document.getElementById('post-text-area');
-  const buttonSubmit = document.getElementById('submit-button');
-  function loadingStatus(){
-
-    let value1 = codeForm.value;
-
-
-    if (value1 === ''){
-      return
-    }
-    else{
-      buttonSubmit.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
-    }
-
-  }
+function loadingStatus(){
+  if (!codeForm || codeForm.value.trim() === '') return;
+  buttonSubmit.innerHTML =
+    '<span class="spinner-border spinner-border-sm"></span>';
+}
 </script>
 
 {% endblock %}
