@@ -41,6 +41,61 @@
     <a href="/wallPost"><button type="button" style="margin: 10px 0px; width: 150px; box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.6);" class="btn btn-secondary">Posts</button></a>
   </div>
 
+
+  {# ✅ Mobile Stats Box (precomputed; no DB on page load) #}
+{% if home_stats %}
+<div class="card mx-auto mt-3 text-white"
+     style="max-width: 420px; background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 14px;">
+  <div class="card-body p-3">
+
+    <div class="row g-2 text-center">
+      <div class="col-6">
+        <div style="font-size:.75rem; opacity:.8;">Win SR (7d)</div>
+        <div style="font-size:1.25rem; font-weight:700;">{{ home_stats.last7.win_sr }}%</div>
+        <div style="font-size:.75rem; opacity:.75;">{{ home_stats.last7.wins }}/{{ home_stats.last7.total }}</div>
+      </div>
+      <div class="col-6">
+        <div style="font-size:.75rem; opacity:.8;">Place SR (7d)</div>
+        <div style="font-size:1.25rem; font-weight:700;">{{ home_stats.last7.place_sr }}%</div>
+        <div style="font-size:.75rem; opacity:.75;">{{ home_stats.last7.places }}/{{ home_stats.last7.total }}</div>
+      </div>
+    </div>
+
+    {% comment %} <hr style="border-color: rgba(255,255,255,0.18);"> {% endcomment %}
+
+    <div class="mt-3">
+      <div style="font-size:.75rem; opacity:.8;">Top track (30d)</div>
+      {% if home_stats.top_track_30d.track %}
+        <div style="font-weight:600;">
+          {{ home_stats.top_track_30d.track }} —
+          {{ home_stats.top_track_30d.wins }} wins ({{ home_stats.top_track_30d.win_sr }}%)
+        </div>
+      {% else %}
+        <div style="opacity:.8;">No data</div>
+      {% endif %}
+    </div>
+
+    {% if home_stats.last7.recent_winners and home_stats.last7.recent_winners|length > 0 %}
+    <div class="mt-3">
+      <div style="font-size:.75rem; opacity:.8;">Previous Winners (7d)</div>
+      <div class="mt-1">
+        {% for w in home_stats.last7.recent_winners %}
+          <div style="font-size:.9rem; font-weight:600;">
+            🏆 {{ w.horse }} <span style="opacity:.75; font-weight:400;">({{ w.track }})</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endif %}
+
+
   {% endif %}
   {% else %}
   <div class="button-div" style="margin: 20px;">

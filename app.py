@@ -15,7 +15,7 @@ import os
 
 from collections import defaultdict
 from apscheduler.schedulers.background import BackgroundScheduler
-
+import json
 
 
 
@@ -68,23 +68,53 @@ def health_check():
     return "OK", 200
 
 
-
-@app.get("/") 
+@app.get("/")
 def home():
-    try: 
+    try:
         if session['user']:
             user_data = horses.return_user_data(session['user'])
             user_last_on_wall = int(user_data['time_logged_wall_post'])
             resp = horses.check_wall_post_time()
+
             for i in resp:
                 last_post_time = i['timeStored']
-            new_posts = False    
-            if user_last_on_wall < last_post_time:
-                new_posts = True
-                
-        return render_template('home.html', homeActive=True, user=session['user'], new_posts=new_posts)
+                new_posts = False
+                if user_last_on_wall < last_post_time:
+                    new_posts = True
+
+                # ✅ ADD THIS (fast file read, no DB)
+                home_stats = read_home_stats()
+
+                return render_template(
+                    "home.html",
+                    homeActive=True,
+                    user=session['user'],
+                    new_posts=new_posts,
+                    home_stats=home_stats  # ✅ pass into template
+                )
     except KeyError:
-        return render_template('home.html', homeActive=True)
+        # ✅ Also pass it for logged-out users (optional but nice)
+        home_stats = read_home_stats()
+        return render_template("home.html", homeActive=True, home_stats=home_stats)
+    
+    
+    
+# @app.get("/") 
+# def home():
+#     try: 
+#         if session['user']:
+#             user_data = horses.return_user_data(session['user'])
+#             user_last_on_wall = int(user_data['time_logged_wall_post'])
+#             resp = horses.check_wall_post_time()
+#             for i in resp:
+#                 last_post_time = i['timeStored']
+#             new_posts = False    
+#             if user_last_on_wall < last_post_time:
+#                 new_posts = True
+                
+#         return render_template('home.html', homeActive=True, user=session['user'], new_posts=new_posts)
+#     except KeyError:
+#         return render_template('home.html', homeActive=True)
 
 
 @app.get("/disclaimer")
@@ -192,6 +222,17 @@ def group_by_track(raw_data):
     return tracks
 
 
+
+
+def read_home_stats():
+    """Loads precomputed home stats from static/home_stats.json (fast, no DB)."""
+    path = os.path.join("static", "home_stats.json")
+    if not os.path.exists(path):
+        return None
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
 # ---------------------------------------------------
 # PRE‑RENDER FUNCTION — RUNS DAILY OR ON FIRST VISIT
 # ---------------------------------------------------
@@ -216,12 +257,154 @@ def build_past_results_page():
     print("Past results page generated.")
 
 
+
+
+# ---------------------------------------------------
+# HOME STATS PRE-COMPUTE — RUNS DAILY (QUIET HOURS)
+# ---------------------------------------------------
+def build_home_stats():
+    print("Building home stats...")
+
+    raw_data = horses.retrive_mongo_past_results()  # same dataset you already use for past results [1](https://onedrive.live.com?cid=79ED6D1B2ED618AD&id=79ED6D1B2ED618AD!s1082c610a4e5460b9af0d9ffb5f58307)
+    now_ts = int(time.time())
+
+    seven_days_ago = now_ts - (7 * 86400)
+    thirty_days_ago = now_ts - (30 * 86400)
+
+    # Helper to safely parse positions
+    def parse_pos(entry):
+        pos = (entry.get("finishPosition") or "").strip()
+        return int(pos) if pos.isdigit() else None
+
+    # Helper to extract track name like your group_by_track() does [1](https://onedrive.live.com?cid=79ED6D1B2ED618AD&id=79ED6D1B2ED618AD!s1082c610a4e5460b9af0d9ffb5f58307)
+    def get_track(entry):
+        race_name = entry.get("race") or ""
+        if " Race" in race_name:
+            return race_name.split(" Race")[0]
+        return race_name or "Unknown"
+
+    # Filter windows
+    last7 = []
+    last30 = []
+    for e in raw_data:
+        ts = e.get("timeStored") or 0
+        if ts >= seven_days_ago:
+            last7.append(e)
+        if ts >= thirty_days_ago:
+            last30.append(e)
+
+    # Last 7 days stats
+    total7 = 0
+    wins7 = 0
+    places7 = 0
+    recent_winners = []  # small list for mobile
+
+    for e in last7:
+        pos = parse_pos(e)
+        if pos is None:
+            continue
+        total7 += 1
+        if pos == 1:
+            wins7 += 1
+            recent_winners.append({
+                "horse": e.get("horse") or e.get("raceDetails", {}).get("horseName") or "Unknown",
+                "track": get_track(e),
+                "ts": e.get("timeStored") or 0
+            })
+        if pos in (1, 2, 3):
+            places7 += 1
+
+    win_sr_7d = round((wins7 / total7) * 100, 1) if total7 else 0.0
+    place_sr_7d = round((places7 / total7) * 100, 1) if total7 else 0.0
+
+    # Sort winners newest-first and limit to keep it mobile-friendly
+    recent_winners.sort(key=lambda x: x["ts"], reverse=True)
+    recent_winners = recent_winners[:3]
+
+    # Days since last win (overall, not just 7d)
+    last_win_ts = None
+    for e in raw_data:
+        pos = parse_pos(e)
+        ts = e.get("timeStored") or 0
+        if pos == 1:
+            if last_win_ts is None or ts > last_win_ts:
+                last_win_ts = ts
+
+    if last_win_ts:
+        days_since_last_win = int((now_ts - last_win_ts) / 86400)
+    else:
+        days_since_last_win = None
+
+    # Top track performance (last 30d): pick track with most wins
+    track_counts = {}  # track -> {wins, total}
+    for e in last30:
+        pos = parse_pos(e)
+        if pos is None:
+            continue
+        track = get_track(e)
+        track_counts.setdefault(track, {"wins": 0, "total": 0})
+        track_counts[track]["total"] += 1
+        if pos == 1:
+            track_counts[track]["wins"] += 1
+
+    top_track = None
+    if track_counts:
+        top_track = max(track_counts.items(), key=lambda kv: kv[1]["wins"])[0]
+        top_track_wins = track_counts[top_track]["wins"]
+        top_track_total = track_counts[top_track]["total"]
+        top_track_sr = round((top_track_wins / top_track_total) * 100, 1) if top_track_total else 0.0
+    else:
+        top_track_wins = top_track_total = top_track_sr = 0
+
+    stats = {
+        "generated_at_ts": now_ts,
+        "last7": {
+            "total": total7,
+            "wins": wins7,
+            "places": places7,
+            "win_sr": win_sr_7d,
+            "place_sr": place_sr_7d,
+            "recent_winners": recent_winners
+        },
+        "top_track_30d": {
+            "track": top_track,
+            "wins": top_track_wins,
+            "total": top_track_total,
+            "win_sr": top_track_sr
+        }
+    }
+
+    out_path = os.path.join("static", "home_stats.json")
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(stats, f, ensure_ascii=False)
+
+    print("Home stats generated.")
+
+
+
 # -----------------------------
 # DAILY SCHEDULER (3 AM)
 # -----------------------------
 scheduler = BackgroundScheduler()
 scheduler.add_job(build_past_results_page, "cron", hour=3, minute=0)
+scheduler.add_job(build_home_stats, "cron", hour=3, minute=5)
 scheduler.start()
+
+
+
+# -----------------------------
+# Warm cache on startup (once)
+# -----------------------------
+
+# Past results page
+past_results_path = os.path.join("static", "past_results.html")
+if not os.path.exists(past_results_path):
+    build_past_results_page()
+
+# Home stats
+home_stats_path = os.path.join("static", "home_stats.json")
+if not os.path.exists(home_stats_path):
+    build_home_stats()
 
 
 # ---------------------------------------------------
