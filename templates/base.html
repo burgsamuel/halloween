@@ -37,6 +37,22 @@
         scale: .95;
         opacity: .7;
       }
+      
+      /* ✅ Glass animated placeholder — global */
+      .glass-placeholder::placeholder,
+      .glass-placeholder::-webkit-input-placeholder,
+      .glass-placeholder::-moz-placeholder,
+      .glass-placeholder::-ms-input-placeholder {
+        color: rgba(255, 255, 255, 0.9);
+        animation: placeholderFade 3s ease-in-out infinite;
+      }
+
+      @keyframes placeholderFade {
+        0%   { opacity: 0.35; }
+        50%  { opacity: 0.95; }
+        100% { opacity: 0.35; }
+      }
+
     </style>
   </head>
   <body>
