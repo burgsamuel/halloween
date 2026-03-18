@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, redirect, session, jsonify
+from flask import Flask, render_template, request, flash, redirect, session, jsonify, send_from_directory
 from mailservice import email_confirmation_email, email_password_reset
 from flask_limiter.util import get_remote_address
 from bson.json_util import dumps
@@ -14,6 +14,8 @@ import time
 import os
 
 from collections import defaultdict
+from apscheduler.schedulers.background import BackgroundScheduler
+
 
 
 
@@ -190,64 +192,104 @@ def group_by_track(raw_data):
     return tracks
 
 
+# ---------------------------------------------------
+# PRE‑RENDER FUNCTION — RUNS DAILY OR ON FIRST VISIT
+# ---------------------------------------------------
+def build_past_results_page():
+    print("Building pre-rendered past results page...")
+
+    raw_data = horses.retrive_mongo_past_results()
+    grouped = group_by_track(raw_data)
+
+    html = render_template(
+        "pastraces.html",
+        pastResults=True,
+        tracks=grouped,
+        timenow=int(time.time()),
+        user="SYSTEM"  # not shown anyway
+    )
+
+    output_path = os.path.join("static", "past_results.html")
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    print("Past results page generated.")
 
 
-    
+# -----------------------------
+# DAILY SCHEDULER (3 AM)
+# -----------------------------
+scheduler = BackgroundScheduler()
+scheduler.add_job(build_past_results_page, "cron", hour=3, minute=0)
+scheduler.start()
 
+
+# ---------------------------------------------------
+# NEW ENDPOINT — SERVES PRE‑RENDERED STATIC HTML
+# ---------------------------------------------------
 @app.get('/pastresults')
 @limiter.limit("8000 per hour")
 def past_results():
-    try:
-        if session.get('user') is not None:
-            user = horses.check_user_exsists(session['user'])
 
-            if user['verified']:
-
-                raw_data = horses.retrive_mongo_past_results()
-
-                # NEW grouping
-                grouped = group_by_track(raw_data)
-
-                return render_template(
-                    'pastraces.html',
-                    pastResults=True,
-                    tracks=grouped,
-                    timenow=int(time.time()),
-                    user=session['user']
-                )
-
-            else:
-                flash("Email not Verified!!")
-                return redirect('/login')
-
-        else:
-            flash("Please Login/Register! ")
-            return redirect('/login')
-
-    except KeyError:
-        flash("Please Login/Register! ")
+    # Must be logged in
+    if session.get('user') is None:
+        flash("Please Login/Register!")
         return redirect('/login')
-   
+
+    # Must be verified
+    user = horses.check_user_exsists(session['user'])
+    if not user['verified']:
+        flash("Email not Verified!!")
+        return redirect('/login')
+
+    # Path to pre-rendered file
+    file_path = os.path.join("static", "past_results.html")
+
+    # If file missing (first run), build it once
+    if not os.path.exists(file_path):
+        build_past_results_page()
+
+    # Serve instantly
+    return send_from_directory("static", "past_results.html")
+
     
+
 # @app.get('/pastresults')
-# @limiter.limit("8000 per hour") 
+# @limiter.limit("8000 per hour")
 # def past_results():
-    
 #     try:
-#         if session['user'] is not None:
+#         if session.get('user') is not None:
 #             user = horses.check_user_exsists(session['user'])
+
 #             if user['verified']:
-#                 data = horses.retrive_mongo_past_results()
-#                 return render_template('pastraces.html', pastResults=True, data=data, timenow=int(time.time()), user=session['user'])  
+
+#                 raw_data = horses.retrive_mongo_past_results()
+
+#                 # NEW grouping
+#                 grouped = group_by_track(raw_data)
+
+#                 return render_template(
+#                     'pastraces.html',
+#                     pastResults=True,
+#                     tracks=grouped,
+#                     timenow=int(time.time()),
+#                     user=session['user']
+#                 )
+
 #             else:
 #                 flash("Email not Verified!!")
-#                 return redirect('/login')    
+#                 return redirect('/login')
+
 #         else:
 #             flash("Please Login/Register! ")
 #             return redirect('/login')
+
 #     except KeyError:
 #         flash("Please Login/Register! ")
-#         return redirect('/login')   
+#         return redirect('/login')
+   
+    
+
     
 ############################################
 ####        Tips and Results Page       ####
