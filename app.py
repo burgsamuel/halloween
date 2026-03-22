@@ -74,7 +74,7 @@ def home():
         if session['user']:
             user_data = horses.return_user_data(session['user'])
             user_last_on_wall = int(user_data['time_logged_wall_post'])
-            resp = horses.check_wall_post_time()
+            resp = list(horses.check_wall_post_time())
 
             for i in resp:
                 last_post_time = i['timeStored']
@@ -82,7 +82,6 @@ def home():
                 if user_last_on_wall < last_post_time:
                     new_posts = True
 
-                # ✅ ADD THIS (fast file read, no DB)
                 home_stats = read_home_stats()
 
                 return render_template(
@@ -90,31 +89,12 @@ def home():
                     homeActive=True,
                     user=session['user'],
                     new_posts=new_posts,
-                    home_stats=home_stats  # ✅ pass into template
+                    home_stats=home_stats
                 )
     except KeyError:
-        # ✅ Also pass it for logged-out users (optional but nice)
         home_stats = read_home_stats()
         return render_template("home.html", homeActive=True, home_stats=home_stats)
     
-    
-    
-# @app.get("/") 
-# def home():
-#     try: 
-#         if session['user']:
-#             user_data = horses.return_user_data(session['user'])
-#             user_last_on_wall = int(user_data['time_logged_wall_post'])
-#             resp = horses.check_wall_post_time()
-#             for i in resp:
-#                 last_post_time = i['timeStored']
-#             new_posts = False    
-#             if user_last_on_wall < last_post_time:
-#                 new_posts = True
-                
-#         return render_template('home.html', homeActive=True, user=session['user'], new_posts=new_posts)
-#     except KeyError:
-#         return render_template('home.html', homeActive=True)
 
 
 @app.get("/disclaimer")
@@ -127,20 +107,17 @@ def disclaimer():
 @limiter.limit("2000 per hour")
 def api_data():
     
-    
     user = request.form['username']
     password = request.form['password']
     user_data = horses.return_user_data(user)
     
-
     if user_data is not None:
-    
         hashed_password = user_data['hashed_password']        
         password_checked = bcrypt.check_password_hash(hashed_password, password)
         
         if password_checked:
             data = horses.retrive_mongo_data()
-            json_data = dumps(data)
+            json_data = dumps(data)  # bson dumps handles cursors natively — safe as-is
             return json_data
         else:
             return jsonify({"password": "Invalid"})            
@@ -212,7 +189,6 @@ def group_by_track(raw_data):
             "silk": silk,
             "openPrice": entry.get("raceDetails", {}).get("openPrice"),
             "placePrice": entry.get("raceDetails", {}).get("placePrice")
-
         })
 
     # Sort horses: 1st → 2nd → 3rd → etc, newest first within each position
@@ -234,12 +210,12 @@ def read_home_stats():
 
 
 # ---------------------------------------------------
-# PRE‑RENDER FUNCTION — RUNS DAILY OR ON FIRST VISIT
+# PRE-RENDER FUNCTION — RUNS DAILY OR ON FIRST VISIT
 # ---------------------------------------------------
 def build_past_results_page():
     with app.app_context():
         print("Building pre-rendered past results page...")
-        raw_data = horses.retrive_mongo_past_results()
+        raw_data = list(horses.retrive_mongo_past_results())  # FIX: list() so group_by_track can iterate freely
         grouped = group_by_track(raw_data)
         html = render_template(
             "pastraces.html",
@@ -265,7 +241,9 @@ def build_home_stats():
     with app.app_context():
         print("Building home stats...")
 
-        raw_data = horses.retrive_mongo_past_results()  # same dataset you already use for past results [1](https://onedrive.live.com?cid=79ED6D1B2ED618AD&id=79ED6D1B2ED618AD!s1082c610a4e5460b9af0d9ffb5f58307)
+        # FIX: wrap in list() so we can iterate raw_data multiple times
+        # (once for last7/last30 filter, again for last_win_ts scan)
+        raw_data = list(horses.retrive_mongo_past_results())
         now_ts = int(time.time())
 
         seven_days_ago = now_ts - (7 * 86400)
@@ -276,7 +254,7 @@ def build_home_stats():
             pos = (entry.get("finishPosition") or "").strip()
             return int(pos) if pos.isdigit() else None
 
-        # Helper to extract track name like your group_by_track() does [1](https://onedrive.live.com?cid=79ED6D1B2ED618AD&id=79ED6D1B2ED618AD!s1082c610a4e5460b9af0d9ffb5f58307)
+        # Helper to extract track name
         def get_track(entry):
             race_name = entry.get("race") or ""
             if " Race" in race_name:
@@ -297,7 +275,7 @@ def build_home_stats():
         total7 = 0
         wins7 = 0
         places7 = 0
-        recent_winners = []  # small list for mobile
+        recent_winners = []
 
         for e in last7:
             pos = parse_pos(e)
@@ -321,7 +299,7 @@ def build_home_stats():
         recent_winners.sort(key=lambda x: x["ts"], reverse=True)
         recent_winners = recent_winners[:3]
 
-        # Days since last win (overall, not just 7d)
+        # FIX: second iteration of raw_data now works because it's a list
         last_win_ts = None
         for e in raw_data:
             pos = parse_pos(e)
@@ -336,7 +314,7 @@ def build_home_stats():
             days_since_last_win = None
 
         # Top track performance (last 30d): pick track with most wins
-        track_counts = {}  # track -> {wins, total}
+        track_counts = {}
         for e in last30:
             pos = parse_pos(e)
             if pos is None:
@@ -412,7 +390,7 @@ if not os.path.exists(home_stats_path):
 
 
 # ---------------------------------------------------
-# NEW ENDPOINT — SERVES PRE‑RENDERED STATIC HTML
+# ENDPOINT — SERVES PRE-RENDERED STATIC HTML
 # ---------------------------------------------------
 @app.get('/pastresults')
 @limiter.limit("8000 per hour")
@@ -439,45 +417,8 @@ def past_results():
     # Serve instantly
     return send_from_directory("static", "past_results.html")
 
-    
 
-# @app.get('/pastresults')
-# @limiter.limit("8000 per hour")
-# def past_results():
-#     try:
-#         if session.get('user') is not None:
-#             user = horses.check_user_exsists(session['user'])
 
-#             if user['verified']:
-
-#                 raw_data = horses.retrive_mongo_past_results()
-
-#                 # NEW grouping
-#                 grouped = group_by_track(raw_data)
-
-#                 return render_template(
-#                     'pastraces.html',
-#                     pastResults=True,
-#                     tracks=grouped,
-#                     timenow=int(time.time()),
-#                     user=session['user']
-#                 )
-
-#             else:
-#                 flash("Email not Verified!!")
-#                 return redirect('/login')
-
-#         else:
-#             flash("Please Login/Register! ")
-#             return redirect('/login')
-
-#     except KeyError:
-#         flash("Please Login/Register! ")
-#         return redirect('/login')
-   
-    
-
-    
 ############################################
 ####        Tips and Results Page       ####
 ############################################
@@ -485,14 +426,13 @@ def past_results():
 
 @app.get('/tips')
 def tips():  
-    
     try:
         if session['user'] is not None:
             user = horses.check_user_exsists(session['user'])
             if user['verified']:
                 user_last_on_wall = int(user['time_logged_wall_post'])
-                resp = horses.check_wall_post_time()
-                data = horses.retrive_mongo_data()
+                resp = list(horses.check_wall_post_time())  # FIX: list()
+                data = list(horses.retrive_mongo_data())    # FIX: list() — template uses data | list twice
                 for i in resp:
                     last_post_time = i['timeStored']
                 new_posts = False    
@@ -517,7 +457,7 @@ def results():
         if session['user'] is not None:
             user = horses.check_user_exsists(session['user'])
             if user['verified']:
-                data = horses.retrive_mongo_result_data()
+                data = list(horses.retrive_mongo_result_data())  # FIX: list()
                 return render_template('results.html', tipsActive=True, data=data, timenow=int(time.time()), user=session['user'])  
             else:
                 flash("Email not Verified!!")
@@ -532,7 +472,7 @@ def results():
 
 
 ############################################
-####            Post/Forum             ####
+####            Post/Forum              ####
 ############################################
 
 
@@ -540,7 +480,7 @@ def results():
 def get_wall():
     try: 
         if session['user'] is not None:
-            data = horses.retrive_post_data(session['user'])
+            data = list(horses.retrive_post_data(session['user']))  # FIX: already done — kept
             return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
     except KeyError:
         flash("Login to access this feature!")
@@ -555,8 +495,8 @@ def submit_post():
         if session['user'] is not None:          
             username = session['user']
             post_text = request.form['postText']
-        horses.store_post_data(username, post_text)
-        data = horses.retrive_post_data(session['user'])
+            horses.store_post_data(username, post_text)
+        data = list(horses.retrive_post_data(session['user']))  # FIX: list()
         return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
             
     except KeyError:
@@ -571,7 +511,7 @@ def remove_post():
         if session['user'] is not None:          
             post_id = request.form['id_of_post']
             horses.delete_post_data(post_id)
-        data = horses.retrive_post_data(session['user'])
+        data = list(horses.retrive_post_data(session['user']))  # FIX: list()
         return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
             
     except KeyError:
@@ -585,12 +525,12 @@ def add_likes():
         if session['user'] is not None:       
             post_id = request.form['like-button']
             horses.add_post_like(post_id)
-        data = horses.retrive_post_data(session['user'])
+        data = list(horses.retrive_post_data(session['user']))  # FIX: list()
         return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
             
     except KeyError:
         flash("Something went wrong with the like button!")
-        data = horses.retrive_post_data(session['user'])
+        data = list(horses.retrive_post_data(session['user']))  # FIX: list() in except branch too
         return render_template('wallPost.html', postsActive=True, user=session['user'], data=data)
 
 
@@ -607,14 +547,12 @@ def login():
         user_exsists = horses.check_user_exsists(user_name)
 
         if user_exsists is not None:
-            
             hashed_password = user_exsists['hashed_password']
-            
             password_checked = bcrypt.check_password_hash(hashed_password, password)
             
             if password_checked:
-                    session['user'] = request.form['email']
-                    return redirect('/tips')
+                session['user'] = request.form['email']
+                return redirect('/tips')
             else:
                 flash("Login details are not correct!")
                 return render_template('login.html', loginActive=True)
@@ -635,10 +573,8 @@ def logout():
 @app.get('/register')
 @limiter.limit("1000 per day")
 def register():
-    
     try:
         if session['user'] is not None:
-            
             flash("You Have Registered Already!")
             return render_template('loginState.html', registerActive=True, user=session['user'])
         else:
@@ -668,16 +604,15 @@ def register_post():
     ver_code = random.randint(1000, 9999)
     verified = False
     attemps = 0
-    #check if email already exsists
+
+    # Check if email already exists
     data = horses.check_user_exsists(email)
     
     if data is not None:
         flash('This Email has already been registered!')
         return render_template('form.html')
-    
     else:
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        
     
     horses.register_user(firstname, lastname, email, hashed_password, mobile_number, street_address, mail_address, state, post_code, ver_code, verified, attemps)
     session['regi'] = email
@@ -700,9 +635,7 @@ def register_post():
 @app.get('/passwordreset')
 @limiter.limit("500 per day")
 def password_reset():
-    
     '''Password reset form. Just collects the users email'''
-    
     return render_template('/password/form1.html')
 
 
@@ -710,14 +643,12 @@ def password_reset():
 @app.post('/passwordEmail')
 @limiter.limit("300 per day")
 def check_email():
-    
     '''Returned from the form with users email to reset the password'''
     
     user_name = request.form['email']
     user_exsists = horses.check_user_exsists(user_name)
     
     if user_exsists is not None:
-        
         ver_code = random.randint(10000, 99999)
         horses.ver_code_update(user_exsists['email'], ver_code)
         session['reset'] = user_exsists['email']
@@ -731,7 +662,6 @@ def check_email():
         else:
             email = threading.Thread(target=email_password_reset, args=(user_exsists['email'], ver_code))
             email.start()
-
             return render_template('/password/checkcode.html', email=user_exsists['email'])       
     else:
         flash('Inncorect email address!')
@@ -742,7 +672,6 @@ def check_email():
 @app.post('/passwordCodeVerification')   
 @limiter.limit("600 per day")
 def check_code():
-    
     user = session['reset']
     code = request.form['code']
     
@@ -750,7 +679,6 @@ def check_code():
     stored_code = user_exsists['ver_code']
     
     if int(code) == int(stored_code):
-        
         session['user'] = user
         return render_template('/password/newPassword.html')
     else:
@@ -767,19 +695,15 @@ def check_code():
 @app.post('/submitNewPassword')
 @limiter.limit("300 per day")
 def update_new_password():
-    
     '''Push new password to db'''
     
     new_password = request.form['password'] 
     
     if session['user'] is not None:
-    
         hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
-        
         horses.update_password(session['user'], hashed_password)
         flash("Password has been updated 👍")
         return render_template('loginState.html')
-        
     else:
         flash('Something Went Wrong!')
         return redirect('/')
@@ -800,11 +724,9 @@ def verify_email():
     user_exsists = horses.check_user_exsists(user)
     stored_code = user_exsists['ver_code']
 
-    
     if int(code) == int(stored_code):
         session['user'] = user
         response = horses.update_verified(user)
-
         flash("You have successfully been verified")
         return redirect('/tips')
     else:

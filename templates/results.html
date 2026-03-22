@@ -1,108 +1,381 @@
-{% extends 'base.html' %} 
-{% block head %} 
+{% extends 'base.html' %}
+{% block head %}
 <meta http-equiv="refresh" content="300">
-{% endblock%}
+{% endblock %}
+{% block title %}Today's Results — The Punters House{% endblock %}
 
-{% block title %} Results {% endblock %}
+{% block extra_styles %}
+<style>
+  .results-page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2rem 1rem 5rem;
+    animation: fadeUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+  }
 
-{% block content%}
+  /* ── PAGE HEADER ─────────────────────────────────────────── */
+  .results-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
 
-<a id="show-next-race" href="/tips" class="btn btn-secondary" style="margin: 10px; width: 185px; box-shadow: 3px 3px 3px rgba(78, 78, 78, 0.6);" onclick="loadingStatus()">Show Next Races</a>
+  .page-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .page-eyebrow::before, .page-eyebrow::after {
+    content: ''; display: block;
+    width: 20px; height: 1px;
+    background: var(--gold); opacity: 0.5;
+  }
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 900;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.1;
+  }
+  .page-title span { color: var(--gold); }
 
-<div style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 750px; justify-content: center; align-items: center;">
+  /* ── COUNT BAR ───────────────────────────────────────────── */
+  .results-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .tips-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 8px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+  }
 
-  <div class="row text-white" style="width: 100vw;">
-    <div class="col-12 text-center">
-      {% set cursor_list = data | list %}
-      {% set length = cursor_list | length %}
-      Total Tips Today 👉 {{ length }}
+  /* ── RESULT CARD ─────────────────────────────────────────── */
+  .results-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .result-card {
+    background: rgba(16,17,20,0.7);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    transition: border-color 0.22s, box-shadow 0.22s;
+  }
+  .result-card:hover {
+    border-color: rgba(201,168,76,0.4);
+    box-shadow: 0 4px 20px rgba(201,168,76,0.07);
+  }
+
+  /* Position accent on left edge */
+  .result-card.pos-1 { border-left: 3px solid var(--gold); }
+  .result-card.pos-2 { border-left: 3px solid #aaa; }
+  .result-card.pos-3 { border-left: 3px solid #cd7f32; }
+
+  /* Card top row */
+  .result-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .result-race {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .result-time {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 0.2rem 0.55rem;
+  }
+
+  /* Horse row */
+  .result-horse-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.45rem;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .result-horse {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  .result-horse img {
+    width: 26px; height: 26px;
+    border-radius: 5px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+  }
+
+  .result-prices {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .price-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .price-pill.win   { background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.4);  color: var(--gold); }
+  .price-pill.place { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--muted); }
+  .price-pill.empty { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); color: rgba(232,228,220,0.3); }
+
+  /* Conditions */
+  .result-conditions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.45rem;
+  }
+  .cond-chip {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 6px;
+    padding: 0.18rem 0.5rem;
+    white-space: nowrap;
+  }
+
+  /* Meta row */
+  .result-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .result-meta-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .result-jt {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  /* Score */
+  .score-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 7px;
+    white-space: nowrap;
+  }
+  .score-badge.none { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--muted); }
+
+  /* Position result banner */
+  .position-banner {
+    margin-top: 0.65rem;
+    border-radius: 8px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pos-banner-1 {
+    background: rgba(201,168,76,0.18);
+    border: 1px solid rgba(201,168,76,0.5);
+    color: var(--gold);
+  }
+  .pos-banner-2 {
+    background: rgba(192,192,192,0.1);
+    border: 1px solid rgba(192,192,192,0.35);
+    color: #c0c0c0;
+  }
+  .pos-banner-3 {
+    background: rgba(205,127,50,0.12);
+    border: 1px solid rgba(205,127,50,0.35);
+    color: #cd7f32;
+  }
+  .pos-banner-other {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--muted);
+  }
+  .pos-banner-pending {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: rgba(232,228,220,0.3);
+    font-style: italic;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="results-page">
+
+  <!-- Header -->
+  <div class="results-header">
+    <div>
+      <div class="page-eyebrow">The Punters House</div>
+      <h1 class="page-title">Today's <span>Results</span></h1>
+    </div>
+
+    <a href="/tips" id="show-next-race" class="btn-gold" onclick="loadingStatus()"
+       style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; font-size:0.78rem; border:none; cursor:pointer; text-decoration:none;">
+      <span id="tips-btn-label">🏇 Next Races</span>
+    </a>
+  </div>
+
+  <!-- Count -->
+  {% set cursor_list = data | list %}
+  {% set length = cursor_list | length %}
+  <div class="results-topbar">
+    <div class="tips-count">
+      🏇 {{ length }} tip{{ 's' if length != 1 }} today
     </div>
   </div>
-    {% for i in cursor_list %} <!-- Loop over the data -->
-    
-    {% if (i['raceTime'] + 299) <= timenow %} 
 
-    
-    <div class="row-flex" style="box-shadow: 3px 3px 5px rgba(5, 5, 5, 0.826); margin: 7px 5px; background-color: rgb(234, 233, 233); padding-top: 5px; padding-left: 15px;padding-right: 20px; border-radius: 10px; min-width: 340px; max-width: 450px;">
-      <div class="row">
-        <div class="col-9 text-start">
-            <strong style="padding: 0;">{{i['race']}} </strong>
-        </div>
-        <div class="col-3 text-end" style="padding: 0; font-size:.9em;">{{i['stringTime']}}</div>  
-      </div>
-      <div class="row">
-    
-        {% if i['raceDetails'] %}
-        <div class="col-7 text-start" style="font-size: .8em; padding: 5px; font-weight: 600;"> {{i['raceDetails']['horseNumber']}}. {{i['horse']}} {{i['raceDetails']['gateNumber']}} </div>
-        <div class="col-5 text-end" style="font-size: .7em; padding: 0;">Win: ${{i['raceDetails']['winPrice']}}  Place: ${{i['raceDetails']['placePrice']}} </div>
-        {% else %}
-        <div class="col-7 text-start" style="font-size: .8em; padding: 5px; font-weight: 600;">🏇 {{i['horse']}} </div>
-        <div class="col-5 text-end" style="font-size: .7em; padding: 0;">Win: $ -  Place: $ - </div>
-        {% endif %}
-        
-      </div>
+  <!-- Cards -->
+  <div class="results-grid">
+  {% for i in cursor_list %}
+    {% if (i['raceTime'] + 299) <= timenow %}
 
-      {% if i['raceDetails']%}
-      <div class="row text-center" style="opacity: .8;">
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['raceDetails']['lastFinishes']}}</div>
-        {% if i['conditions'] %}
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['condition']}}</div>
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['weather']}}</div>
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['temp']}}°C</div>
-        {% endif %}
-      </div>
+      {% if i['finishPosition'] == '1' %}
+        {% set card_class = 'pos-1' %}
+      {% elif i['finishPosition'] == '2' %}
+        {% set card_class = 'pos-2' %}
+      {% elif i['finishPosition'] == '3' %}
+        {% set card_class = 'pos-3' %}
+      {% else %}
+        {% set card_class = '' %}
       {% endif %}
-    
-    
-      <div class="row" >
-        <div class="col-7 text-start" style="padding-top: 5px; padding-right: 0; padding-left: 7px; font-size:.8em;">J: {{i['jockeyName']}}</div>
-      </div>
-    
-        <div class="row">
-          <div class="col-9 text-start" style="padding-right: 0; padding-left: 7px; font-size:.75em;">T: {{i['trainerName']}}</div>
-          <div class="col-1" style="padding-bottom: 6px;"><img src="{{i['bibLink'] }}" alt="👕" style="width: 20px; margin: 0;"></div>
-          <div class="col-2 text-end" style="font-size: .7em; padding: 0;">Score: {{i['score']}}</div>
+
+      <div class="result-card {{ card_class }}">
+
+        <!-- Race + Time -->
+        <div class="result-top">
+          <span class="result-race">{{ i['race'] }}</span>
+          <span class="result-time">{{ i['stringTime'] }}</span>
         </div>
 
-        {% if i['finishPosition'] %}
-
-            {% if i['finishPosition'] == '1' %}
-            <div class="row-flex align-items-center">
-                <div class="col text-center" style="background-color: rgba(215, 212, 24, 0.868); border-radius: 5px;">Position: {{i['finishPosition']}} </div>
-            </div>
-            {% elif i['finishPosition'] == '2' %}
-            <div class="row-flex align-items-center">
-                <div class="col text-center" style="background-color: rgba(65, 215, 24, 0.505);  border-radius: 5px;">Position: {{i['finishPosition']}} </div>
-            </div>
-            {% elif i['finishPosition'] == '3' %}
-            <div class="row-flex align-items-center">
-                <div class="col text-center" style="background-color: rgba(24, 215, 167, 0.868);  border-radius: 5px;">Position: {{i['finishPosition']}} </div>
-            </div>
+        <!-- Horse + Prices -->
+        <div class="result-horse-row">
+          <div class="result-horse">
+            {% if i['bibLink'] %}
+              <img src="{{ i['bibLink'] }}" alt="silk">
             {% else %}
-            <div class="row-flex align-items-center">
-                <div class="col text-center">Position: {{i['finishPosition']}} </div>
-            </div>
+              🏇
             {% endif %}
+            {% if i['raceDetails'] %}
+              {{ i['raceDetails']['horseNumber'] }}. {{ i['horse'] }}&nbsp;<span style="color:var(--muted); font-weight:400; font-size:0.82rem;">Gate {{ i['raceDetails']['gateNumber'] }}</span>
+            {% else %}
+              {{ i['horse'] }}
+            {% endif %}
+          </div>
 
-        {% else %}
-        <div class="row-flex align-items-center">
-            <div class="col text-center">Position: - </div>
+          <div class="result-prices">
+            {% if i['raceDetails'] %}
+              <span class="price-pill win">Win ${{ i['raceDetails']['winPrice'] }}</span>
+              <span class="price-pill place">Place ${{ i['raceDetails']['placePrice'] }}</span>
+            {% else %}
+              <span class="price-pill empty">Win $ —</span>
+              <span class="price-pill empty">Place $ —</span>
+            {% endif %}
+          </div>
         </div>
 
+        <!-- Conditions -->
+        {% if i['raceDetails'] %}
+        <div class="result-conditions">
+          {% if i['raceDetails']['lastFinishes'] %}
+            <span class="cond-chip">📈 {{ i['raceDetails']['lastFinishes'] }}</span>
+          {% endif %}
+          {% if i['conditions'] %}
+            <span class="cond-chip">🏟 {{ i['conditions']['condition'] }}</span>
+            <span class="cond-chip">☁️ {{ i['conditions']['weather'] }}</span>
+            <span class="cond-chip">🌡 {{ i['conditions']['temp'] }}°C</span>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Jockey / Trainer / Score -->
+        <div class="result-meta">
+          <div class="result-meta-left">
+            <span class="result-jt">J: {{ i['jockeyName'] }}</span>
+            <span class="result-jt">T: {{ i['trainerName'] }}</span>
+          </div>
+          <span class="score-badge none">Score {{ i['score'] }}</span>
+        </div>
+
+        <!-- Finish position banner -->
+        {% if i['finishPosition'] %}
+          {% if i['finishPosition'] == '1' %}
+            <div class="position-banner pos-banner-1">🥇 1st Place — Winner!</div>
+          {% elif i['finishPosition'] == '2' %}
+            <div class="position-banner pos-banner-2">🥈 2nd Place</div>
+          {% elif i['finishPosition'] == '3' %}
+            <div class="position-banner pos-banner-3">🥉 3rd Place</div>
+          {% else %}
+            <div class="position-banner pos-banner-other">Finished {{ i['finishPosition'] }}</div>
+          {% endif %}
+        {% else %}
+          <div class="position-banner pos-banner-pending">Result pending…</div>
+        {% endif %}
+
+      </div>
+
     {% endif %}
-    </div>
+  {% endfor %}
+  </div>
 
+</div>
 
-    {% endif %}
-    
-    
- {% endfor %}</div>
-
- <script>
-  const tipsButton = document.getElementById('show-next-race')
-
-  function loadingStatus(){
-        tipsButton.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
+<script>
+  function loadingStatus() {
+    const lbl = document.getElementById('tips-btn-label');
+    if (lbl) lbl.innerHTML = '<div class="spinner-grow spinner-grow-sm" style="width:.8rem;height:.8rem;"></div>';
   }
- </script>
+</script>
+
 {% endblock %}

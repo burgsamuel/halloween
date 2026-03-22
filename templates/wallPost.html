@@ -1,134 +1,493 @@
 {% extends 'base.html' %}
-{% block title %}Member Posts{% endblock %}
+{% block title %}Member Posts — The Punters House{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .wall-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1rem 5rem;
+    animation: fadeUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+  }
+
+  /* ── HEADER ──────────────────────────────────────────────── */
+  .wall-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .page-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .page-eyebrow::before, .page-eyebrow::after {
+    content: ''; display: block;
+    width: 20px; height: 1px;
+    background: var(--gold); opacity: 0.5;
+  }
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 900;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.1;
+  }
+  .page-title span { color: var(--gold); }
+
+  .post-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 8px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    align-self: flex-end;
+  }
+
+  /* ── COMPOSER ────────────────────────────────────────────── */
+  .composer {
+    background: rgba(16,17,20,0.72);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.4rem;
+    margin-bottom: 1.75rem;
+    transition: border-color 0.22s;
+  }
+  .composer:focus-within {
+    border-color: rgba(201,168,76,0.5);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.07);
+  }
+
+  .composer-top {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .composer-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    color: var(--gold);
+    font-weight: 700;
+    font-family: var(--font-display);
+  }
+
+  .composer-user {
+    flex: 1;
+  }
+  .composer-user-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.15rem;
+  }
+  .composer-username {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .composer-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    color: var(--text);
+    resize: vertical;
+    min-height: 90px;
+    outline: none;
+    transition: border-color 0.22s, background 0.22s;
+    line-height: 1.55;
+  }
+  .composer-textarea::placeholder {
+    color: rgba(232,228,220,0.28);
+    animation: placeholderFade 3s ease-in-out infinite;
+  }
+  .composer-textarea:focus {
+    border-color: rgba(201,168,76,0.4);
+    background: rgba(201,168,76,0.04);
+  }
+
+  .composer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  #char-count {
+    font-size: 0.72rem;
+    color: var(--muted);
+    transition: color 0.22s;
+  }
+  #char-count.warn  { color: #e67e22; }
+  #char-count.limit { color: #e74c3c; }
+
+  .composer-submit {
+    padding: 0.55rem 1.4rem;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* ── DIVIDER WITH LABEL ──────────────────────────────────── */
+  .feed-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .feed-label::before, .feed-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── POST CARD ───────────────────────────────────────────── */
+  .post-card {
+    background: rgba(16,17,20,0.68);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 0.65rem;
+    transition: border-color 0.22s, box-shadow 0.22s;
+    animation: fadeUp 0.4s cubic-bezier(0.4,0,0.2,1) both;
+  }
+  .post-card:hover {
+    border-color: rgba(201,168,76,0.3);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  }
+
+  /* Post header */
+  .post-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .post-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    color: var(--gold);
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  .post-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .post-username {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .post-time {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 0.05rem;
+  }
+
+  /* Own post badge */
+  .own-badge {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--gold);
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  /* Post body */
+  .post-body {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 0.85rem;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  /* Post footer */
+  .post-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .like-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .like-count .like-num {
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* Like button */
+  .btn-like {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 0.35rem 0.8rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.22s;
+  }
+  .btn-like:hover {
+    background: rgba(201,168,76,0.1);
+    border-color: rgba(201,168,76,0.4);
+    color: var(--gold);
+    transform: scale(1.03);
+  }
+  .btn-like:active { transform: scale(0.97); }
+
+  /* Delete button */
+  .btn-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(231,76,60,0.08);
+    border: 1px solid rgba(231,76,60,0.25);
+    border-radius: 8px;
+    padding: 0.35rem 0.8rem;
+    color: rgba(231,76,60,0.7);
+    cursor: pointer;
+    transition: all 0.22s;
+  }
+  .btn-delete:hover {
+    background: rgba(231,76,60,0.15);
+    border-color: rgba(231,76,60,0.55);
+    color: #e74c3c;
+  }
+
+  /* ── EMPTY STATE ─────────────────────────────────────────── */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+  }
+  .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .empty-state p { font-size: 0.88rem; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+  @keyframes placeholderFade {
+    0%,100% { opacity: 0.35; }
+    50%      { opacity: 0.9;  }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 
-<div class="container-fluid px-3" style="max-width: 760px;">
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="tph-flash" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:999; white-space:nowrap;">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-danger mt-3">
-          {{ message }}
-        </div>
-      {% endfor %}
+<div class="wall-page">
+
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <div class="wall-header">
+    <div>
+      <div class="page-eyebrow">The Punters House</div>
+      <h1 class="page-title">Member <span>Posts</span></h1>
+    </div>
+    {% if data %}
+    <span class="post-count">💬 {{ data | length }} post{{ 's' if data | length != 1 }}</span>
     {% endif %}
-  {% endwith %}
+  </div>
 
-  <!-- POST COMPOSER -->
-  <div class="card mt-4 mb-4 text-white"
-       style="
-         background: rgba(0,0,0,0.55);
-         backdrop-filter: blur(12px);
-         border-radius: 18px;
-         border: 1px solid rgba(255,255,255,0.15);
-       ">
-    <div class="card-body">
-
-      <div style="font-size:.8rem; opacity:.75;">
-        Posting as
+  <!-- ── COMPOSER ────────────────────────────────────────── -->
+  <div class="composer">
+    <div class="composer-top">
+      <div class="composer-avatar">{{ user[0] if user else '?' }}</div>
+      <div class="composer-user">
+        <div class="composer-user-label">Posting as</div>
+        <div class="composer-username">{{ user }}</div>
       </div>
+    </div>
 
-      <input type="text"
-             class="form-control mb-3"
-             value="{{ user }}"
-             readonly
-             style="background: rgba(255,255,255,0.08); color: white; border: none;">
+    <form action="/submitPost" method="post">
+      <textarea
+        class="composer-textarea"
+        id="post-text-area"
+        name="postText"
+        rows="3"
+        maxlength="1000"
+        placeholder="Share a tip, insight or thought with the community…"
+        required
+        oninput="updateCount(this)"
+      ></textarea>
 
-      <form action="/submitPost" method="post">
-        <textarea class="form-control mb-3"
-                  id="post-text-area"
-                  name="postText"
-                  rows="3"
-                  maxlength="1000"
-                  placeholder="Share something with the community…"
-                  required
-                  style="background: rgba(255,255,255,0.08); color: white; border: none;"></textarea>
-
-        <button type="submit"
-                class="btn btn-secondary w-100"
-                id="submit-button"
-                onclick="loadingStatus()">
-          Post
+      <div class="composer-footer">
+        <span id="char-count">0 / 1000</span>
+        <button type="submit" class="btn-gold composer-submit" id="submit-button" onclick="loadingStatus()">
+          <span id="post-btn-label">Post</span>
         </button>
-      </form>
-
-    </div>
+      </div>
+    </form>
   </div>
 
-  <!-- POSTS FEED -->
-  {% for i in data %}
-  <div class="card mb-3 text-white"
-       id="{{ i['_id'] }}"
-       style="
-         background: rgba(0,0,0,0.55);
-         backdrop-filter: blur(12px);
-         border-radius: 18px;
-         border: 1px solid rgba(255,255,255,0.12);
-       ">
+  <!-- ── FEED ────────────────────────────────────────────── -->
+  {% if data %}
+    <div class="feed-label">Latest Posts</div>
 
-    <!-- Header -->
-    <div class="card-body pb-2">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <div style="font-weight:600;">{{ i['user'] }}</div>
-          <div style="font-size:.75rem; opacity:.7;">
-            {{ i['format_time'] }}
-          </div>
+    {% for i in data %}
+    <div class="post-card" id="{{ i['_id'] }}">
+
+      <!-- Header -->
+      <div class="post-header">
+        <div class="post-avatar">{{ i['user'][0] if i['user'] else '?' }}</div>
+        <div class="post-meta">
+          <div class="post-username">{{ i['user'] }}</div>
+          <div class="post-time">{{ i['format_time'] }}</div>
         </div>
+        {% if user == i['user'] %}
+          <span class="own-badge">You</span>
+        {% endif %}
+      </div>
+
+      <!-- Body -->
+      <div class="post-body">{{ i['post'] }}</div>
+
+      <!-- Footer -->
+      <div class="post-footer">
+
+        <span class="like-count">
+          👍 <span class="like-num">{{ i['likes'] }}</span> like{{ 's' if i['likes'] != 1 }}
+        </span>
+
+        {% if user == i['user'] %}
+          <form action="/removePost" method="post"
+                onsubmit="return confirm('Remove this post?')">
+            <button class="btn-delete" name="id_of_post" value="{{ i['_id'] }}">
+              🗑 Delete
+            </button>
+          </form>
+        {% else %}
+          <form action="/addlike" method="post"
+                onsubmit="return confirm('Like this post?')">
+            <button class="btn-like" name="like-button" value="{{ i['_id'] }}">
+              👍 Like
+            </button>
+          </form>
+        {% endif %}
+
       </div>
     </div>
+    {% endfor %}
 
-    <!-- Content -->
-    <div class="card-body pt-0">
-      <p style="font-size:1rem; margin-bottom:0; line-height:1.4;">
-        {{ i['post'] }}
-      </p>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">💬</div>
+      <p>No posts yet — be the first to share something!</p>
     </div>
-
-    <!-- Footer -->
-    <div class="card-footer bg-transparent border-0
-                d-flex justify-content-between align-items-center">
-
-      <span style="font-size:.8rem; opacity:.75;">
-        👍 {{ i['likes'] }}
-      </span>
-
-      {% if user == i['user'] %}
-        <form action="/removePost" method="post"
-              onsubmit="return confirm('Delete this post?')">
-          <button class="btn btn-outline-danger btn-sm"
-                  name="id_of_post"
-                  value="{{ i['_id'] }}">
-            Delete
-          </button>
-        </form>
-      {% else %}
-        <form action="/addlike" method="post">
-          <button class="btn btn-outline-light btn-sm"
-                  name="like-button"
-                  value="{{ i['_id'] }}">
-            Like 👍
-          </button>
-        </form>
-      {% endif %}
-
-    </div>
-
-  </div>
-  {% endfor %}
+  {% endif %}
 
 </div>
 
 <script>
-const codeForm = document.getElementById('post-text-area');
-const buttonSubmit = document.getElementById('submit-button');
+  const textarea     = document.getElementById('post-text-area');
+  const charCount    = document.getElementById('char-count');
+  const submitButton = document.getElementById('submit-button');
+  const postBtnLabel = document.getElementById('post-btn-label');
 
-function loadingStatus(){
-  if (!codeForm || codeForm.value.trim() === '') return;
-  buttonSubmit.innerHTML =
-    '<span class="spinner-border spinner-border-sm"></span>';
-}
+  function updateCount(el) {
+    const len = el.value.length;
+    charCount.textContent = len + ' / 1000';
+    charCount.className = len > 900 ? 'limit' : len > 750 ? 'warn' : '';
+  }
+
+  function loadingStatus() {
+    if (!textarea || textarea.value.trim() === '') return;
+    postBtnLabel.innerHTML = '<div class="spinner-grow spinner-grow-sm" style="width:.8rem;height:.8rem;"></div>';
+    submitButton.disabled = true;
+    submitButton.style.opacity = '0.75';
+  }
 </script>
 
 {% endblock %}

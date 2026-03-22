@@ -1,35 +1,140 @@
 {% extends 'base.html' %}
+{% block title %}Disclaimer — The Punters House{% endblock %}
 
-{% block title %}
-    disclaimer
+{% block extra_styles %}
+<style>
+  .disclaimer-page {
+    min-height: calc(100vh - 63px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.5rem 1rem 5rem;
+    animation: fadeUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+  }
+
+  .disclaimer-card {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  .disclaimer-card .glass {
+    padding: 2.25rem 2.25rem;
+  }
+
+  .disclaimer-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .disclaimer-eyebrow::before,
+  .disclaimer-eyebrow::after {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+    opacity: 0.5;
+  }
+
+  .disclaimer-title {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--text);
+    margin: 0 0 1.75rem;
+    line-height: 1.1;
+  }
+  .disclaimer-title span { color: var(--gold); }
+
+  .tph-divider-inner {
+    border: none;
+    height: 1px;
+    background: var(--border);
+    margin: 1.5rem 0;
+  }
+
+  .disclaimer-body {
+    color: rgba(232,228,220,0.82);
+    font-size: 0.88rem;
+    line-height: 1.8;
+    letter-spacing: 0.01em;
+  }
+
+  .disclaimer-body p {
+    margin-bottom: 1.1rem;
+  }
+
+  .disclaimer-body p:last-child {
+    margin-bottom: 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+  }
+
+  .disclaimer-back {
+    margin-bottom: 1.5rem;
+    align-self: flex-start;
+    max-width: 720px;
+    width: 100%;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
+<div class="disclaimer-page">
 
+  <div class="disclaimer-back">
+    <a href="/" class="btn-ghost" style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.78rem; padding: 0.45rem 1rem;">
+      ← Home
+    </a>
+  </div>
 
-<a href="/"><button type="button" style="margin-left: 10px;  width: 125px;" class="btn btn-secondary">Home</button></a>
+  <div class="disclaimer-card">
+    <div class="glass">
 
-<p class="text-white" style="margin-left: 20px; padding: 12px; margin-right: 20px; background-color: black;">
-    <br>
-    <br> 
-    Disclaimer:
-<br>
-<br>
-The information provided on this Website/social media pages, is for informational purposes only and does not constitute professional advice.  While The Punters House Society strives to provide accurate and up-to-date information, we make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability or availability with respect to the information or related graphics contained on this Website for any purpose.  Any reliance you place on such information is therefore strictly at your own risk.
-<br>
-<br>
-The Punters House Society shall not be held liable for any loss or damage, including without limitation, indirect or consequential loss or damage, or any loss or damage whatsoever arising from loss of data or profits arising out of, or in connection with, the use of this Website.
-<br>
-<br>
-Through this Website, you may be able to link to other websites which are not under the control of The Punters House Society. We have no control over the nature, content and availability of those sites. The inclusion of any links does not necessarily imply a recommendation or endorse the views expressed within them.
-<br><br>
-Every effort is made to keep the Website up and running smoothly. However, The Punters House Society takes no responsibility for, and will not be liable for, the Website being temporarily unavailable due to technical issues beyond our control.
-<br><br>
-Users of this Website are advised to consult with qualified professionals for specific advice related to their individual circumstances.  The information provided here is not a substitute for professional guidance. The Punters House Society does not endorse or recommend any specific products, services, or treatments mentioned on this Website, unless explicitly stated.
-<br><br>
-By using this Website, you agree to the terms of this disclaimer.
-<br><br>
-The Punters House Society 01-01-2025
-</p>
+      <div class="disclaimer-eyebrow" style="justify-content:center;">Legal</div>
+      <h1 class="disclaimer-title" style="text-align:center;">Site <span>Disclaimer</span></h1>
 
+      <hr class="tph-divider-inner">
+
+      <div class="disclaimer-body">
+        <p>
+          The information provided on this Website and social media pages is for informational purposes only and does not constitute professional advice. While The Punters House Society strives to provide accurate and up-to-date information, we make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability or availability with respect to the information or related graphics contained on this Website for any purpose. Any reliance you place on such information is therefore strictly at your own risk.
+        </p>
+        <p>
+          The Punters House Society shall not be held liable for any loss or damage, including without limitation, indirect or consequential loss or damage, or any loss or damage whatsoever arising from loss of data or profits arising out of, or in connection with, the use of this Website.
+        </p>
+        <p>
+          Through this Website, you may be able to link to other websites which are not under the control of The Punters House Society. We have no control over the nature, content and availability of those sites. The inclusion of any links does not necessarily imply a recommendation or endorse the views expressed within them.
+        </p>
+        <p>
+          Every effort is made to keep the Website up and running smoothly. However, The Punters House Society takes no responsibility for, and will not be liable for, the Website being temporarily unavailable due to technical issues beyond our control.
+        </p>
+        <p>
+          Users of this Website are advised to consult with qualified professionals for specific advice related to their individual circumstances. The information provided here is not a substitute for professional guidance. The Punters House Society does not endorse or recommend any specific products, services, or treatments mentioned on this Website, unless explicitly stated.
+        </p>
+        <p>
+          By using this Website, you agree to the terms of this disclaimer.
+        </p>
+
+        <hr class="tph-divider-inner">
+
+        <p>The Punters House Society &mdash; 01-01-2025</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
 {% endblock %}

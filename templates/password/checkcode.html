@@ -1,51 +1,235 @@
 {% extends 'base.html' %}
+{% block title %}Verify Code — The Punters House{% endblock %}
 
-{% block title %}
-    Registration
+{% block extra_styles %}
+<style>
+  .auth-page {
+    min-height: calc(100vh - 63px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem 5rem;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 400px;
+    animation: fadeUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+  }
+
+  .auth-card .glass { padding: 2.25rem 2rem; text-align: center; }
+
+  .auth-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin: 0 auto 1.25rem;
+    animation: iconPop 0.5s 0.15s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  .auth-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.45rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+  .auth-eyebrow::before, .auth-eyebrow::after {
+    content: ''; display: block;
+    width: 24px; height: 1px;
+    background: var(--gold); opacity: 0.5;
+  }
+
+  .auth-title {
+    font-family: var(--font-display);
+    font-size: 1.85rem;
+    font-weight: 900;
+    color: var(--text);
+    margin: 0 0 0.5rem;
+    line-height: 1.1;
+  }
+  .auth-title span { color: var(--gold); }
+
+  .auth-sub {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+  }
+
+  .email-pill {
+    display: inline-block;
+    font-size: 0.8rem;
+    color: var(--gold);
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 8px;
+    padding: 0.3rem 0.8rem;
+    margin-bottom: 1.5rem;
+    word-break: break-all;
+  }
+
+  .auth-divider {
+    border: none; height: 1px;
+    background: var(--border);
+    margin: 1.25rem 0;
+  }
+
+  .auth-field { text-align: left; margin-bottom: 1.25rem; }
+  .auth-field label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .auth-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    font-family: var(--font-body);
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    color: var(--text);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+  }
+  .auth-input::placeholder {
+    color: rgba(232,228,220,0.2);
+    letter-spacing: 0.1em;
+    font-weight: 400;
+    font-size: 0.9rem;
+  }
+  .auth-input:focus {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.06);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+  }
+
+  .auth-submit {
+    width: 100%;
+    padding: 0.78rem;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: none;
+    cursor: pointer;
+  }
+
+  .auth-help {
+    margin-top: 1rem;
+    font-size: 0.76rem;
+    color: rgba(232,228,220,0.3);
+  }
+
+  .auth-footer {
+    margin-top: 0.75rem;
+    text-align: center;
+  }
+  .auth-footer a {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.22s;
+  }
+  .auth-footer a:hover { color: var(--gold); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes iconPop {
+    from { opacity: 0; transform: scale(0.6); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-  {% for message in messages %}
-    <p style="max-width: 350px; margin-left: 7px; border: 1px solid tomato; background-color: rgba(255, 99, 71, 0.473); color: aliceblue; border-radius: 3px; padding: 10px;" >{{ message }}</p>
-  {% endfor %}
 
-{% endif %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="tph-flash" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:999; white-space:nowrap;">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
 {% endwith %}
- <h3 style="color: aliceblue; margin-left: 7px;">
-Password Reset
-</h3>
-<h4 style="color: aliceblue; margin-left: 7px; font-size: 1.5rem; margin-bottom: 25px;">
-  <br>Email has been sent to: {{ email }}<br><br>
-  Please type the verification code contained within the email below.
-</h4>
-<form action="/passwordCodeVerification" method="post">
-  <div class="form-group text-white">
-    <label class="form-group text-white" for="code" style="margin-left: 10px;">Verification Code 👇</label>
-      <input type="text" class="form-control" id="code-form"  name="code" placeholder="Enter code" style="max-width: 150px; margin: 10px;" required>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="glass">
+
+      <div class="auth-icon">📨</div>
+      <div class="auth-eyebrow">Password Reset</div>
+      <h1 class="auth-title">Check Your <span>Email</span></h1>
+
+      <p class="auth-sub">We've sent a verification code to:</p>
+      <span class="email-pill">{{ email }}</span>
+
+      <hr class="auth-divider">
+
+      <form action="/passwordCodeVerification" method="post">
+
+        <div class="auth-field">
+          <label for="code-form">Verification Code</label>
+          <input
+            type="text"
+            class="auth-input glass-placeholder"
+            id="code-form"
+            name="code"
+            placeholder="_ _ _ _ _ _"
+            autocomplete="one-time-code"
+            inputmode="numeric"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn-gold auth-submit" id="submit-button" onclick="loadingStatus()">
+          <span id="btn-label">Verify Code</span>
+        </button>
+
+      </form>
+
+      <p class="auth-help">Didn't receive it? Check your spam folder.</p>
+
+      <div class="auth-footer">
+        <a href="/passwordreset">← Try a different email</a>
+      </div>
+
+    </div>
   </div>
-  <button type="submit" class="btn btn-secondary" value="Login" style="margin: 10px; width: 125px;" id="submit-button" onclick="loadingStatus()">
-    Submit 
-  </button>
-</form> 
+</div>
 
 <script>
-
-  const codeForm = document.getElementById('code-form');
+  const codeForm     = document.getElementById('code-form');
   const buttonSubmit = document.getElementById('submit-button');
-  function loadingStatus(){
+  const btnLabel     = document.getElementById('btn-label');
 
-    let value1 = codeForm.value;
-
-
-    if (value1 === ''){
-      return
-    }
-    else{
-      buttonSubmit.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
-    }
-
+  function loadingStatus() {
+    if (codeForm.value.trim() === '') return;
+    btnLabel.innerHTML = '<div class="spinner-grow spinner-grow-sm" style="width:.85rem;height:.85rem;"></div>';
+    // buttonSubmit.disabled = true;
+    buttonSubmit.style.opacity = '0.75';
   }
 </script>
 

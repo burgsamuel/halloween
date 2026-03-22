@@ -1,48 +1,205 @@
 {% extends 'base.html' %}
+{% block title %}Password Reset — The Punters House{% endblock %}
 
-{% block title %}
-    Password reset
+{% block extra_styles %}
+<style>
+  .auth-page {
+    min-height: calc(100vh - 63px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem 5rem;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 400px;
+    animation: fadeUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+  }
+
+  .auth-card .glass { padding: 2.25rem 2rem; }
+
+  .auth-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin: 0 auto 1.25rem;
+    animation: iconPop 0.5s 0.15s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  .auth-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.45rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+  .auth-eyebrow::before, .auth-eyebrow::after {
+    content: ''; display: block;
+    width: 24px; height: 1px;
+    background: var(--gold); opacity: 0.5;
+  }
+
+  .auth-title {
+    font-family: var(--font-display);
+    font-size: 1.85rem;
+    font-weight: 900;
+    color: var(--text);
+    text-align: center;
+    margin: 0 0 0.5rem;
+    line-height: 1.1;
+  }
+  .auth-title span { color: var(--gold); }
+
+  .auth-sub {
+    font-size: 0.82rem;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 1.75rem;
+    line-height: 1.5;
+  }
+
+  .auth-divider {
+    border: none; height: 1px;
+    background: var(--border);
+    margin: 1.25rem 0;
+  }
+
+  .auth-field { margin-bottom: 1.25rem; }
+  .auth-field label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+  .auth-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+  }
+  .auth-input::placeholder { color: rgba(232,228,220,0.28); }
+  .auth-input:focus {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.06);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+  }
+
+  .auth-submit {
+    width: 100%;
+    padding: 0.78rem;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: none;
+    cursor: pointer;
+  }
+
+  .auth-footer {
+    margin-top: 1.1rem;
+    text-align: center;
+  }
+  .auth-footer a {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.22s;
+  }
+  .auth-footer a:hover { color: var(--gold); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+  @keyframes iconPop {
+    from { opacity: 0; transform: scale(0.6); }
+    to   { opacity: 1; transform: scale(1);   }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-  {% for message in messages %}
-    <p style="margin-left: 10px; max-width: 350px; border: 1px solid tomato; background-color: rgba(255, 99, 71, 0.473);  color: aliceblue; border-radius: 3px; padding: 10px;" >{{ message }}</p>
-  {% endfor %}
 
-{% endif %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="tph-flash" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:999; white-space:nowrap;">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
 {% endwith %}
 
-<h5 class="text-white" style="margin-left: 10px; margin-bottom: 25px;">Please enter details below</h5>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="glass">
 
-<form action="/passwordEmail" method="post" onsubmit="return confirm('Confirm Password Reset!')">
-    <div class="form-group">
-        <input type="text" class="form-control" id="email-form" name="email" placeholder="Enter Email" style="max-width: 350px; margin: 20px 10px;" required>
+      <div class="auth-icon">🔑</div>
+      <div class="auth-eyebrow">Account Recovery</div>
+      <h1 class="auth-title">Reset <span>Password</span></h1>
+      <p class="auth-sub">Enter your email address and we'll send you a verification code to reset your password.</p>
+
+      <hr class="auth-divider">
+
+      <form action="/passwordEmail" method="post" onsubmit="return confirm('Send password reset email?')">
+
+        <div class="auth-field">
+          <label for="email-form">Email Address</label>
+          <input
+            type="email"
+            class="auth-input glass-placeholder"
+            id="email-form"
+            name="email"
+            placeholder="you@example.com"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn-gold auth-submit" id="submit-button" onclick="loadingStatus()">
+          <span id="btn-label">Send Reset Code</span>
+        </button>
+
+      </form>
+
+      <div class="auth-footer">
+        <a href="/login">← Back to Login</a>
+      </div>
+
     </div>
-    <button type="submit" class="btn btn-secondary" value="Login" style="margin: 10px; width: 125px;" id="submit-button" onclick="loadingStatus()">
-      Reset
-    </button>
-   
-    
-</form>
-
+  </div>
+</div>
 
 <script>
+  const emailForm    = document.getElementById('email-form');
+  const buttonSubmit = document.getElementById('submit-button');
+  const btnLabel     = document.getElementById('btn-label');
 
-    const emailForm = document.getElementById('email-form');
- 
-    const buttonSubmit = document.getElementById('submit-button');
-    function loadingStatus(){
-
-        let value1 = emailForm.value;
-    
-    if (value1 === ''){
-      return
-    }
-    else{
-      buttonSubmit.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
-    }
-}
+  function loadingStatus() {
+    if (emailForm.value.trim() === '') return;
+    btnLabel.innerHTML = '<div class="spinner-grow spinner-grow-sm" style="width:.85rem;height:.85rem;"></div>';
+    // buttonSubmit.disabled = true;
+    buttonSubmit.style.opacity = '0.75';
+  }
 </script>
+
 {% endblock %}

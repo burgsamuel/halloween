@@ -1,127 +1,412 @@
-{% extends 'base.html' %} 
-{% block head %} 
+{% extends 'base.html' %}
+{% block head %}
 <meta http-equiv="refresh" content="300">
-{% endblock%}
+{% endblock %}
+{% block title %}Today's Tips — The Punters House{% endblock %}
 
-{% block title %} Tips {% endblock %} {% block content%} 
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-  {% for message in messages %}
-    <p style="max-width: 350px; margin-left: 7px; border: 1px solid rgba(22, 185, 87, 0.667); background-color: rgba(71, 255, 126, 0.473); color: aliceblue; border-radius: 3px; padding: 10px;" >{{ message }}</p>
-  {% endfor %}
-
-{% endif %}
-{% endwith %}
-{% if new_posts %}
-<div class="button-div">
-  <a href="/wallPost"><button type="button" style="margin: 10px 10px; width: 150px; box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.6);" class="btn btn-secondary">
-    Posts
-    <div style="font-size: .8rem; width: 50px; height: 20px; background-color: rgba(255, 0, 0, 0.895); border-radius: 15px; position: absolute;">NEW</div>
-  </button></a>
-</div>
-
-{% endif %}
-
-
-<a href="/results" type="button" id="already-raced-button"  class="btn btn-secondary" onclick="loadingStatus()" style="margin: 10px; width: 185px; box-shadow: 3px 3px 3px rgba(78, 78, 78, 0.6);">Show Todays Results</a>
-<div style="display: flex; flex-direction: row; flex-wrap: wrap; max-width: 750px; justify-content: center; align-items: center;">
-
-  <script>
-    const showButton = document.getElementById('already-raced-button');
-    showButton.style.display = 'none';
-
-    function loadingStatus(){
-        showButton.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
-  }
-  </script>
-  
-<div class="row text-white" style="width: 100vw;">
-  <div class="col-12 text-center">
-    {% set cursor_list = data | list %}
-    {% set length = cursor_list | length %}
-    Total Tips Today 👉 {{ length }}
-  </div>
-</div>
-
-
-{% for i in cursor_list %} <!-- Loop over the data -->
-
-{% if i['raceTime'] < timenow %} <!-- If block to check if race has already been ran plus 5min -->
-
-<script>
-  showButton.style.display = 'flex';
-</script>
+{% block extra_styles %}
 <style>
-  #already-raced-button{
+  .tips-page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2rem 1rem 5rem;
+    animation: fadeUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+  }
+
+  /* ── PAGE HEADER ─────────────────────────────────────────── */
+  .tips-header {
     display: flex;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .page-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .page-eyebrow::before, .page-eyebrow::after {
+    content: ''; display: block;
+    width: 20px; height: 1px;
+    background: var(--gold); opacity: 0.5;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 900;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.1;
+  }
+  .page-title span { color: var(--gold); }
+
+  /* ── TOP BAR ─────────────────────────────────────────────── */
+  .tips-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .tips-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 8px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+  }
+
+  .topbar-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
     align-items: center;
   }
+
+  /* Results button (hidden until a race has passed) */
+  #already-raced-button {
+    display: none;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    font-size: 0.78rem;
+  }
+
+  /* New posts badge button */
+  .posts-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    font-size: 0.78rem;
+  }
+  .posts-new-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #e74c3c;
+    color: #fff;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.35rem;
+    border-radius: 99px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(231,76,60,0.5); }
+    50%      { box-shadow: 0 0 0 5px rgba(231,76,60,0); }
+  }
+
+  /* ── TIP CARD ────────────────────────────────────────────── */
+  .tips-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .tip-card {
+    background: rgba(16,17,20,0.7);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    transition: border-color 0.22s, box-shadow 0.22s;
+  }
+  .tip-card:hover {
+    border-color: rgba(201,168,76,0.45);
+    box-shadow: 0 4px 20px rgba(201,168,76,0.08);
+  }
+
+  /* Card top row */
+  .tip-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .tip-race {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .tip-time {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 0.2rem 0.55rem;
+  }
+
+  /* Horse row */
+  .tip-horse-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.45rem;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .tip-horse {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  .tip-horse img {
+    width: 26px; height: 26px;
+    border-radius: 5px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+  }
+
+  .tip-prices {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .price-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .price-pill.win {
+    background: rgba(201,168,76,0.15);
+    border: 1px solid rgba(201,168,76,0.4);
+    color: var(--gold);
+  }
+  .price-pill.place {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--muted);
+  }
+  .price-pill.empty {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    color: rgba(232,228,220,0.3);
+  }
+
+  /* Conditions strip */
+  .tip-conditions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.45rem;
+  }
+  .cond-chip {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 6px;
+    padding: 0.18rem 0.5rem;
+    white-space: nowrap;
+  }
+
+  /* Jockey / trainer / score row */
+  .tip-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .tip-meta-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .tip-jt {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  /* Score badge — colour-coded */
+  .score-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 7px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .score-badge.hot   { background: rgba(231,76,60,0.15);  border: 1px solid rgba(231,76,60,0.4);  color: #e74c3c; }
+  .score-badge.warm  { background: rgba(230,126,34,0.15); border: 1px solid rgba(230,126,34,0.4); color: #e67e22; }
+  .score-badge.ok    { background: rgba(52,152,219,0.15); border: 1px solid rgba(52,152,219,0.4); color: #3498db; }
+  .score-badge.cold  { background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.4); color: #2ecc71; }
+  .score-badge.none  { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--muted); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
 </style>
+{% endblock %}
 
+{% block content %}
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="tph-flash" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:999; white-space:nowrap;">{{ message }}</div>
+    {% endfor %}
   {% endif %}
+{% endwith %}
 
-  
+<div class="tips-page">
 
-{% if (i['raceTime'] + 300) > timenow %} <!-- Start of second if block -->
+  <!-- Header -->
+  <div class="tips-header">
+    <div>
+      <div class="page-eyebrow">The Punters House</div>
+      <h1 class="page-title">Today's <span>Tips</span></h1>
+    </div>
 
-  <div class="row-flex" style=" box-shadow: 3px 3px 5px rgba(5, 5, 5, 0.826); margin: 7px 5px; background-color: rgb(234, 233, 233); padding-top: 5px; padding-left: 15px;padding-right: 20px; border-radius: 10px; min-width: 340px; max-width: 450px;">
-    <div class="row">
-      <div class="col-9 text-start">
-          <strong style="padding: 0;">{{i['race']}}</strong>
-      </div>
-      <div class="col-3 text-end" style="padding: 0; font-size:.9em;">{{i['stringTime']}}</div>  
+    <div class="topbar-actions">
+      {% if new_posts %}
+      <a href="/wallPost" class="posts-btn btn-ghost" style="padding:0.45rem 0.9rem;">
+        💬 Posts
+        <span class="posts-new-badge">NEW</span>
+      </a>
+      {% endif %}
+
+      <a href="/results" id="already-raced-button" class="btn-gold" onclick="loadingStatus()" style="padding:0.45rem 1rem; font-size:0.78rem; border:none; cursor:pointer; text-decoration:none;">
+        <span id="results-btn-label">📊 Today's Results</span>
+      </a>
     </div>
-    <div class="row">
-  
-      {% if i['raceDetails'] %}
-      <div class="col-7 text-start" style="font-size: .8em; padding: 5px; font-weight: 600;"> {{i['raceDetails']['horseNumber']}}. {{i['horse']}} {{i['raceDetails']['gateNumber']}} </div>
-      <div class="col-5 text-end" style="font-size: .7em; padding: 6px 0px;">Win: ${{i['raceDetails']['winPrice']}}  Place: ${{i['raceDetails']['placePrice']}} </div>
-      {% else %}
-      <div class="col-7 text-start" style="font-size: .8em; padding: 5px; font-weight: 600;">🏇 {{i['horse']}} </div>
-      <div class="col-5 text-end" style="font-size: .7em; padding: 0;">Win: $ -  Place: $ - </div>
-      {% endif%}
-      
-    </div>
-  
-    {% if i['raceDetails']%}
-      <div class="row text-center" style="opacity: .8;">
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['raceDetails']['lastFinishes']}}</div>
-        {% if i['conditions'] %}
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['condition']}}</div>
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['weather']}}</div>
-        <div class="col-3" style="font-size: .7em; padding: 0px 3px;">{{i['conditions']['temp']}}°C</div>
-        {% endif %}
-      </div>
-  
-    {% endif %}
-  
-    <div class="row" >
-      <div class="col-7 text-start" style="padding-top: 5px; padding-right: 0; padding-left: 7px; font-size:.8em;">J: {{i['jockeyName']}}</div>
-    </div>
-  
-      <div class="row">
-        <div class="col-9 text-start" style="padding-right: 0; padding-left: 7px; font-size:.75em;">T: {{i['trainerName']}}</div>
-        <div class="col-1" style=" padding-bottom: 6px; padding-right: 5px;"><img src="{{i['bibLink'] }}" alt="👕" style="width: 20px; margin: 0;"></div>
-        {% if i['score'] > 50 %}
-        <div class="col-2 text-dark text-center" style="font-size: .7em; padding: 5px 0px;"><span class="text-black">Score: </span>{{i['score']}}</div>
-        {% elif i['score'] > 25 and i['score'] <= 50 %}
-        <div class="col-2 text-primary text-center" style="font-size: .7em; padding: 5px 0px;"><span class="text-black">Score: </span>{{i['score']}}</div>
-        {% elif i['score'] > 10 and i['score'] <= 25 %}
-        <div class="col-2 text-success text-primary text-center" style="font-size: .7em; padding: 5px 0px;"><span class="text-black">Score: </span>{{i['score']}}</div>
-        {% elif i['score'] <= 10 %}
-        <div class="col-2 text-success text-center" style="font-size: .7em; padding: 5px 0px;"><span class="text-black">Score: </span> {{i['score']}}</div>
-        {% else %}
-        <div class="col-2 text-center" style="font-size: .7em; padding: 5px 0px;"><span class="text-black">Score: </span>{{i['score']}}</div>
-        {% endif %}
-  
-      </div>
   </div>
 
+  <!-- Count bar -->
+  {% set cursor_list = data | list %}
+  {% set length = cursor_list | length %}
+  <div class="tips-topbar">
+    <div class="tips-count">
+      🏇 {{ length }} tip{{ 's' if length != 1 }} today
+    </div>
+  </div>
 
+  <!-- Cards -->
+  <div class="tips-grid">
+  {% for i in cursor_list %}
 
-{% endif %}
+    {% if i['raceTime'] < timenow %}
+    <script>
+      document.getElementById('already-raced-button').style.display = 'inline-flex';
+    </script>
+    {% endif %}
 
-{% endfor%}
+    {% if (i['raceTime'] + 300) > timenow %}
+    <div class="tip-card">
+
+      <!-- Race + Time -->
+      <div class="tip-top">
+        <span class="tip-race">{{ i['race'] }}</span>
+        <span class="tip-time">{{ i['stringTime'] }}</span>
+      </div>
+
+      <!-- Horse + Prices -->
+      <div class="tip-horse-row">
+        <div class="tip-horse">
+          {% if i['bibLink'] %}
+            <img src="{{ i['bibLink'] }}" alt="silk">
+          {% else %}
+            🏇
+          {% endif %}
+          {% if i['raceDetails'] %}
+            {{ i['raceDetails']['horseNumber'] }}. {{ i['horse'] }} &nbsp;<span style="color:var(--muted); font-weight:400; font-size:0.82rem;">Gate {{ i['raceDetails']['gateNumber'] }}</span>
+          {% else %}
+            {{ i['horse'] }}
+          {% endif %}
+        </div>
+
+        <div class="tip-prices">
+          {% if i['raceDetails'] %}
+            <span class="price-pill win">Win ${{ i['raceDetails']['winPrice'] }}</span>
+            <span class="price-pill place">Place ${{ i['raceDetails']['placePrice'] }}</span>
+          {% else %}
+            <span class="price-pill empty">Win $ —</span>
+            <span class="price-pill empty">Place $ —</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Conditions -->
+      {% if i['raceDetails'] %}
+      <div class="tip-conditions">
+        {% if i['raceDetails']['lastFinishes'] %}
+          <span class="cond-chip">📈 {{ i['raceDetails']['lastFinishes'] }}</span>
+        {% endif %}
+        {% if i['conditions'] %}
+          <span class="cond-chip">🏟 {{ i['conditions']['condition'] }}</span>
+          <span class="cond-chip">☁️ {{ i['conditions']['weather'] }}</span>
+          <span class="cond-chip">🌡 {{ i['conditions']['temp'] }}°C</span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Jockey / Trainer / Score -->
+      <div class="tip-meta">
+        <div class="tip-meta-left">
+          <span class="tip-jt">J: {{ i['jockeyName'] }}</span>
+          <span class="tip-jt">T: {{ i['trainerName'] }}</span>
+        </div>
+
+        {% if i['score'] is not none %}
+          {% if i['score'] > 50 %}
+            <span class="score-badge hot">🔥 Score {{ i['score'] }}</span>
+          {% elif i['score'] > 25 %}
+            <span class="score-badge warm">⚡ Score {{ i['score'] }}</span>
+          {% elif i['score'] > 10 %}
+            <span class="score-badge ok">💧 Score {{ i['score'] }}</span>
+          {% else %}
+            <span class="score-badge cold">❄️ Score {{ i['score'] }}</span>
+          {% endif %}
+        {% else %}
+          <span class="score-badge none">Score —</span>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endif %}
+
+  {% endfor %}
+  </div>
+
+</div>
+
+<script>
+  function loadingStatus() {
+    const btn = document.getElementById('results-btn-label');
+    if (btn) btn.innerHTML = '<div class="spinner-grow spinner-grow-sm" style="width:.8rem;height:.8rem;"></div>';
+  }
+</script>
 
 {% endblock %}

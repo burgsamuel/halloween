@@ -1,181 +1,394 @@
-{% extends 'base.html' %} {% block title %} Register Form{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Register — The Punters House{% endblock %}
 
-{% block head %}
+{% block extra_styles %}
+<style>
+  .register-page {
+    min-height: calc(100vh - 63px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2.5rem 1rem 5rem;
+  }
 
-{% endblock%}
+  .register-card {
+    width: 100%;
+    max-width: 520px;
+    animation: fadeUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+  }
+
+  .register-card .glass {
+    padding: 2.25rem 2rem;
+  }
+
+  .reg-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+  .reg-eyebrow::before,
+  .reg-eyebrow::after {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+    opacity: 0.5;
+  }
+
+  .reg-title {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 900;
+    color: var(--text);
+    text-align: center;
+    margin: 0 0 1.75rem;
+    line-height: 1.1;
+  }
+  .reg-title span { color: var(--gold); }
+
+  /* Section headings inside form */
+  .reg-section-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 1.5rem 0 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .reg-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Two-column row */
+  .reg-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  @media (max-width: 480px) {
+    .reg-row { grid-template-columns: 1fr; }
+  }
+
+  /* Field */
+  .reg-field {
+    margin-bottom: 0.85rem;
+  }
+  .reg-field label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+  .reg-field label .field-note {
+    font-size: 0.68rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: rgba(232,228,220,0.4);
+    margin-left: 0.3rem;
+  }
+
+  .reg-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 0.9rem;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+  }
+  .reg-input::placeholder { color: rgba(232,228,220,0.25); }
+  .reg-input:focus {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.06);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+  }
+
+  /* Validation states */
+  .reg-input.is-invalid {
+    border-color: rgba(231,76,60,0.7) !important;
+    box-shadow: 0 0 0 3px rgba(231,76,60,0.1) !important;
+  }
+  .reg-invalid-msg {
+    font-size: 0.72rem;
+    color: #e74c3c;
+    margin-top: 0.3rem;
+    display: none;
+  }
+  .was-validated .reg-input:invalid ~ .reg-invalid-msg { display: block; }
+
+  /* Password feedback badge */
+  .pw-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 99px;
+    margin-left: 0.4rem;
+    background: rgba(201,168,76,0.12);
+    color: var(--gold);
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+  }
+  .pw-badge.error { background: rgba(231,76,60,0.12); color: #e74c3c; }
+  .pw-badge.success { background: rgba(71,255,126,0.12); color: #47ff7e; }
+
+  /* Checkbox */
+  .reg-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin: 1.25rem 0 1.5rem;
+    cursor: pointer;
+  }
+  .reg-check input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    accent-color: var(--gold);
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .reg-check-label {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .reg-check-label a {
+    color: var(--gold);
+    text-decoration: none;
+  }
+  .reg-check-label a:hover { text-decoration: underline; }
+
+  /* Submit */
+  .reg-submit {
+    width: 100%;
+    padding: 0.8rem;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Helper text */
+  .reg-helper {
+    font-size: 0.72rem;
+    color: rgba(232,228,220,0.35);
+    margin-top: 0.35rem;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-  {% for message in messages %}
-    <p style="border: 1px solid tomato; background-color: rgba(255, 99, 71, 0.473); color: aliceblue; border-radius: 3px; padding: 10px; max-width: 350px; margin-left: 7px;">{{ message }}</p>
-  {% endfor %}
 
-{% endif %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="tph-flash" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:999; white-space:nowrap;">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
 {% endwith %}
 
-    <form class="needs-validation text-white" action="/register" method="post" novalidate>
-        <div class="form-row">
-          <div class="col-md-4 mb-3">
-            <label for="firstname" style="margin-left: 7px;">First name</label>
-            <input type="text" name="firstname" class="form-control" id="firstname" placeholder="First name" style="max-width: 350px; margin: 7px;" required>
-            <div class="valid-feedback">
-              Looks good!
-            </div>
+<div class="register-page">
+  <div class="register-card">
+    <div class="glass">
+
+      <div class="reg-eyebrow">Join The Community</div>
+      <h1 class="reg-title">Create <span>Account</span></h1>
+
+      <form class="needs-validation" action="/register" method="post" novalidate>
+
+        <!-- Personal Details -->
+        <div class="reg-section-label">Personal Details</div>
+
+        <div class="reg-row">
+          <div class="reg-field">
+            <label for="firstname">First Name</label>
+            <input type="text" name="firstname" class="reg-input glass-placeholder" id="firstname" placeholder="First name" required>
+            <div class="reg-invalid-msg">Required.</div>
           </div>
-          <div class="col-md-4 mb-3">
-            <label for="lastname" style="margin-left: 7px;">Last name</label>
-            <input type="text" name="lastname" class="form-control" id="lastname" placeholder="Last name" style="max-width: 350px; margin: 7px;" required>
-            <div class="valid-feedback">
-              Looks good!
-            </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label for="email" style="margin-left: 7px;">Email</label>
-              <input type="email" name="email" class="form-control" id="email" placeholder="Email" style="max-width: 350px; margin: 7px;" required>
-              <div class="invalid-feedback" style="margin-left: 7px;">
-                Please choose a valid email.
-              </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label for="password" style="margin-left: 7px;">Password (minimum 8 characters)<span id="password-span" style="font-size: .8rem;"></span></label>
-              <input type="password" name="password" class="form-control" id="password" style="max-width: 350px; margin: 7px;" minlength="8"  required>
-              <div class="invalid-feedback" style="margin-left: 7px;">
-                Please choose a Strong Password.
-              </div>
-          </div>
-            <div class="col-md-4 mb-3">
-              <label for="password" style="margin-left: 7px;">Retype Password <span id="retype-password-span"></span></label>
-                <input type="password" class="form-control" id="retypecheck" style="max-width: 350px; margin: 7px;" minlength="8"  required>
-                <div class="invalid-feedback" style="margin-left: 7px;">
-                  Please retype your Password.
-                </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label for="mobile" style="margin-left: 7px;">Mobile</label>
-              <input type="tel" name="mobile" class="form-control" id="mobile" placeholder="Mobile" pattern="[0-9]{4}[0-9]{3}[0-9]{3}" style="max-width: 350px; margin: 7px;" required>
-              <div class="invalid-feedback" style="margin-left: 7px;">
-                Please choose a valid Mobile Number.
-              </div>
-              <small id="emailHelp" class="form-text text-white" style="margin-left: 7px;">e.g. 0400123456 no spaces</small>
+          <div class="reg-field">
+            <label for="lastname">Last Name</label>
+            <input type="text" name="lastname" class="reg-input glass-placeholder" id="lastname" placeholder="Last name" required>
+            <div class="reg-invalid-msg">Required.</div>
           </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <label for="address" style="margin-left: 7px;">Residental Address</label>
-            <input type="text" class="form-control" name="address" id="address" placeholder="Address" style="max-width: 350px; margin: 7px;" required>
-            <div class="invalid-feedback" style="margin-left: 7px;">
-              Please provide an Address.
-            </div>
+
+        <div class="reg-field">
+          <label for="email">Email Address</label>
+          <input type="email" name="email" class="reg-input glass-placeholder" id="email" placeholder="you@example.com" required>
+          <div class="reg-invalid-msg">Please enter a valid email.</div>
+        </div>
+
+        <div class="reg-field">
+          <label for="mobile">Mobile Number</label>
+          <input type="tel" name="mobile" class="reg-input glass-placeholder" id="mobile" placeholder="0400123456" pattern="[0-9]{4}[0-9]{3}[0-9]{3}" required>
+          <div class="reg-invalid-msg">Please enter a valid mobile (e.g. 0400123456, no spaces).</div>
+        </div>
+
+        <!-- Password -->
+        <div class="reg-section-label">Security</div>
+
+        <div class="reg-field">
+          <label for="password">
+            Password
+            <span class="field-note">(min 8 characters)</span>
+            <span class="pw-badge" id="password-badge"></span>
+          </label>
+          <input type="password" name="password" class="reg-input glass-placeholder" id="password" minlength="8" required>
+          <div class="reg-invalid-msg">Minimum 8 characters required.</div>
+        </div>
+
+        <div class="reg-field">
+          <label for="retypecheck">
+            Confirm Password
+            <span class="pw-badge" id="retype-badge"></span>
+          </label>
+          <input type="password" class="reg-input glass-placeholder" id="retypecheck" minlength="8" required>
+          <div class="reg-invalid-msg">Please retype your password.</div>
+        </div>
+
+        <!-- Address -->
+        <div class="reg-section-label">Address</div>
+
+        <div class="reg-field">
+          <label for="address">Residential Address</label>
+          <input type="text" name="address" class="reg-input glass-placeholder" id="address" placeholder="Street address" required>
+          <div class="reg-invalid-msg">Please provide your address.</div>
+        </div>
+
+        <div class="reg-field">
+          <label for="mailingaddress">
+            Mailing Address
+            <span class="field-note">(if different)</span>
+          </label>
+          <input type="text" name="mailingaddress" class="reg-input glass-placeholder" id="mailingaddress" placeholder="Optional">
+        </div>
+
+        <div class="reg-row">
+          <div class="reg-field">
+            <label for="state">State</label>
+            <input type="text" name="state" class="reg-input glass-placeholder" id="state" placeholder="e.g. VIC" required>
+            <div class="reg-invalid-msg">Required.</div>
+          </div>
+          <div class="reg-field">
+            <label for="postcode">Post Code</label>
+            <input type="text" name="postcode" class="reg-input glass-placeholder" id="postcode" placeholder="e.g. 3000" required>
+            <div class="reg-invalid-msg">Required.</div>
           </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <label for="address" style="margin-left: 7px;">Mailing Address if different from ☝️</label>
-            <input type="text" class="form-control" name="mailingaddress" id="mailingaddress" placeholder="(optional)" style="max-width: 350px; margin: 7px;" >
-          </div>
-          <div class="col-md-3 mb-3">
-            <label for="state" style="margin-left: 7px;">State</label>
-            <input type="text" name="state" class="form-control" id="state" placeholder="State" style="max-width: 150px; margin: 7px;" required>
-            <div class="invalid-feedback" style="margin-left: 7px;">
-              Please provide a valid state.
-            </div>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label for="postcode" style="margin-left: 7px;">Post Code</label>
-            <input type="text" name="postcode" class="form-control" id="postcode" placeholder="Post Code" style="max-width: 150px; margin: 7px;" required>
-            <div class="invalid-feedback" style="margin-left: 7px;">
-              Please provide a valid post code.
-            </div>
-          </div>
-        </div>
-        <div class="form-group">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="" id="invalidCheck" style="margin: 7px;" required>
-            <label class="form-check-label" for="invalidCheck" style="margin-left: 7px;">
-              Agree to <a href="/disclaimer">Disclaimer</a> before Registering. 
-            </label>
-            <div class="invalid-feedback" style="margin-left: 7px;">
-              You must agree before submitting.
-            </div>
-          </div>
-        </div>
-        <button class="btn btn-secondary" type="submit" id="submit-button" onclick="loadingStatus()" style="margin: 7px; margin-top: 7px; width: 125px;">Submit form</button>
+
+        <!-- Agreement -->
+        <label class="reg-check">
+          <input type="checkbox" id="invalidCheck" required>
+          <span class="reg-check-label">
+            I have read and agree to the <a href="/disclaimer">Disclaimer</a> before registering.
+          </span>
+        </label>
+
+        <button class="btn-gold reg-submit" type="submit" id="submit-button" onclick="loadingStatus()">
+          <span id="btn-label">Create Account</span>
+        </button>
+
       </form>
-      
-      <script>
-      // Example starter JavaScript for disabling form submissions if there are invalid fields
-      (function() {
-        'use strict';
-        window.addEventListener('load', function() {
-          // Fetch all the forms we want to apply custom Bootstrap validation styles to
-          var forms = document.getElementsByClassName('needs-validation');
-          // Loop over them and prevent submission
-          var validation = Array.prototype.filter.call(forms, function(form) {
-            form.addEventListener('submit', function(event) {
-              if (form.checkValidity() === false) {
-                event.preventDefault();
-                event.stopPropagation();
-              }
-              form.classList.add('was-validated');
-            }, false);
-          });
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Bootstrap validation
+  (function() {
+    'use strict';
+    window.addEventListener('load', function() {
+      var forms = document.getElementsByClassName('needs-validation');
+      Array.prototype.filter.call(forms, function(form) {
+        form.addEventListener('submit', function(event) {
+          if (form.checkValidity() === false) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
         }, false);
-      })();
+      });
+    }, false);
+  })();
 
+  const passwordBox   = document.getElementById('password');
+  const retypeCheck   = document.getElementById('retypecheck');
+  const retypeBadge   = document.getElementById('retype-badge');
+  const passwordBadge = document.getElementById('password-badge');
 
-      const passwordBox = document.getElementById('password')
-      const retypeCheck = document.getElementById('retypecheck')
-      const retypeSpan = document.getElementById('retype-password-span') 
-      const passwordSpan = document.getElementById('password-span')
+  function checkPassword() {
+    const pw  = passwordBox.value;
+    const pw2 = retypeCheck.value;
 
-      function checkPassword() {
-        const firstValue = passwordBox.value;
-        const secondValue = retypeCheck.value;
-        if (firstValue === secondValue){
-          if (firstValue.length == 0){
-            retypeSpan.innerText = '';
-          }
-          else{
-            retypeSpan.innerText = '👍✅';
-          }
-        }
-        else {
-          retypeSpan.innerText = '👎';
-        }
-      
-        if (firstValue.length < 8 && firstValue.length > 0){
-          passwordSpan.innerText = ' Too Short';
-        }
-        else{
-          if (firstValue.length > 7){
-            passwordSpan.innerText = '👍';
-          }
+    // Password strength badge
+    if (pw.length === 0) {
+      passwordBadge.textContent = '';
+      passwordBadge.className = 'pw-badge';
+    } else if (pw.length < 8) {
+      passwordBadge.textContent = 'Too Short';
+      passwordBadge.className = 'pw-badge error';
+    } else {
+      passwordBadge.textContent = '✓ Strong enough';
+      passwordBadge.className = 'pw-badge success';
+    }
 
-        }
+    // Retype badge
+    if (pw2.length === 0) {
+      retypeBadge.textContent = '';
+      retypeBadge.className = 'pw-badge';
+    } else if (pw === pw2) {
+      retypeBadge.textContent = '✓ Match';
+      retypeBadge.className = 'pw-badge success';
+    } else {
+      retypeBadge.textContent = '✗ No match';
+      retypeBadge.className = 'pw-badge error';
+    }
+  }
 
-      }
+  setInterval(checkPassword, 400);
 
-      setInterval(()=>{
-        checkPassword()
-      },500)
-      
+  // Submit loading state
+  const buttonSubmit = document.getElementById('submit-button');
+  const btnLabel     = document.getElementById('btn-label');
 
-      const buttonSubmit = document.getElementById('submit-button');
-      function loadingStatus(){
-
-        let value1 = passwordBox.value;
-        let value2 = retypeCheck.value;
-
-        if (value1 === '' || value2 === ''){
-          return
-        }
-        else{
-          buttonSubmit.innerHTML = '<div class="spinner-grow spinner-grow-sm"></div>';
-        }
-      }
-
-      </script>
+  function loadingStatus() {
+    if (passwordBox.value === '' || retypeCheck.value === '') return;
+    btnLabel.innerHTML = '<div class="spinner-grow spinner-grow-sm" style="width:.85rem;height:.85rem;"></div>';
+    // buttonSubmit.disabled = true;
+    buttonSubmit.style.opacity = '0.75';
+  }
+</script>
 
 {% endblock %}
-<script>
-
-
-</script>
