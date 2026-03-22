@@ -485,6 +485,7 @@
   function loadingStatus() {
     if (!textarea || textarea.value.trim() === '') return;
     postBtnLabel.innerHTML = '<div class="spinner-grow spinner-grow-sm" style="width:.8rem;height:.8rem;"></div>';
+    submitButton.disabled = true;
     submitButton.style.opacity = '0.75';
   }
 </script>
