@@ -340,25 +340,64 @@
     .result-row:last-child { margin-bottom: 0; }
     .result-row:hover { filter: brightness(1.1); }
 
+    /* ── WINNER ANIMATIONS ───────────────────────────────────── */
+    @keyframes goldPulse {
+      0%, 100% { box-shadow: 0 0 16px rgba(255,215,0,0.32), 0 0 38px rgba(201,168,76,0.16); }
+      50%       { box-shadow: 0 0 30px rgba(255,215,0,0.58), 0 0 65px rgba(201,168,76,0.32); }
+    }
+    @keyframes silverPulse {
+      0%, 100% { box-shadow: 0 0 12px rgba(200,218,235,0.22), 0 0 28px rgba(192,210,230,0.1); }
+      50%       { box-shadow: 0 0 24px rgba(210,228,248,0.46), 0 0 50px rgba(200,218,235,0.25); }
+    }
+    @keyframes bronzePulse {
+      0%, 100% { box-shadow: 0 0 12px rgba(205,127,50,0.26), 0 0 28px rgba(176,120,60,0.12); }
+      50%       { box-shadow: 0 0 24px rgba(225,150,70,0.5),  0 0 52px rgba(205,127,50,0.28); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    /* 🥇 GOLD */
     .pos-1 {
-      background: rgba(201,168,76,0.12);
-      border: 1px solid rgba(201,168,76,0.38);
-      box-shadow: 0 0 14px rgba(201,168,76,0.07);
+      background: linear-gradient(135deg, rgba(201,168,76,0.22) 0%, rgba(255,215,0,0.12) 50%, rgba(201,168,76,0.18) 100%);
+      border: 1.5px solid rgba(255,215,0,0.62);
+      border-left: 4px solid #ffd700;
+      animation: goldPulse 2.4s ease-in-out infinite;
+      position: relative;
+      overflow: hidden;
     }
+    .pos-1::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(105deg, transparent 30%, rgba(255,215,0,0.09) 50%, transparent 70%);
+      background-size: 200% 100%;
+      animation: shimmer 2.8s linear infinite;
+      pointer-events: none;
+    }
+
+    /* 🥈 SILVER */
     .pos-2 {
-      background: rgba(192,192,192,0.07);
-      border: 1px solid rgba(192,192,192,0.22);
+      background: linear-gradient(135deg, rgba(192,210,230,0.14) 0%, rgba(215,228,242,0.09) 50%, rgba(192,210,230,0.12) 100%);
+      border: 1.5px solid rgba(200,218,235,0.52);
+      border-left: 4px solid #c8dae8;
+      animation: silverPulse 2.8s ease-in-out infinite;
     }
+
+    /* 🥉 BRONZE */
     .pos-3 {
-      background: rgba(176,141,87,0.07);
-      border: 1px solid rgba(176,141,87,0.22);
+      background: linear-gradient(135deg, rgba(205,127,50,0.18) 0%, rgba(230,155,70,0.1) 50%, rgba(205,127,50,0.15) 100%);
+      border: 1.5px solid rgba(220,148,72,0.52);
+      border-left: 4px solid #e0944a;
+      animation: bronzePulse 3s ease-in-out infinite;
     }
+
     .pos-other {
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.07);
     }
 
-    .pos-medal { font-size: 1.1rem; flex-shrink: 0; width: 22px; text-align: center; }
+    .pos-medal { font-size: 1.4rem; flex-shrink: 0; width: 26px; text-align: center; filter: drop-shadow(0 0 6px rgba(255,200,50,0.6)); }
 
     .result-left { display: flex; flex-direction: column; gap: 0.22rem; flex: 1; min-width: 0; }
 
@@ -396,16 +435,23 @@
     }
 
     .price-badge {
-      background: rgba(201,168,76,0.15);
-      border: 1px solid rgba(201,168,76,0.38);
-      color: var(--gold);
+      background: rgba(201,168,76,0.2);
+      border: 1px solid rgba(255,215,0,0.5);
+      color: #ffd700;
+      text-shadow: 0 0 10px rgba(255,215,0,0.45);
       padding: 0.2rem 0.55rem;
       border-radius: 6px;
       font-size: 0.76rem;
       font-weight: 700;
       white-space: nowrap;
     }
-    .pos-label { font-size: 0.73rem; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
+    .pos-label {
+      font-size: 0.73rem; font-weight: 600; letter-spacing: 0.04em;
+    }
+    .pos-1 .pos-label { color: #ffd700; }
+    .pos-2 .pos-label { color: #c8dae8; }
+    .pos-3 .pos-label { color: #e0944a; }
+    .pos-other .pos-label { color: var(--muted); }
     .date-label { font-size: 0.68rem; color: rgba(232,228,220,0.28); }
 
     .tph-footer-link {
